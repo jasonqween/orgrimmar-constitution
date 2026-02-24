@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-02-24 (3) -- Аудит и поправки
+
+### CHARTER.md
+- L3 auto-fix: агенты уровня L3 могут выполнять low-risk автофиксы без одобрения (restart, vacuum, log rotation). High-risk -- всегда одобрение принца.
+- Cron delivery: каждый cron job обязан иметь явный `channel` в delivery config.
+
+### PRINCIPLES.md
+- Усилена формулировка pipeline-чеклиста: «НИКОГДА не начинай задачу без проверки pipeline»
+- Добавлен явный запрет: «НИКОГДА не создавай pipeline вручную -- только через pipeline-builder»
+
+### Причина
+- L3 auto-fix: Иллидан фактически выполняет автофиксы, но граница не была формализована
+- Cron delivery: 4 cron jobs были сломаны из-за отсутствия явного channel
+- Pipeline: Тралл дважды нарушил мягкую формулировку правила
+
+Автор: Тралл (qwwiwi), ожидает одобрение принца (jasonqween)
+
 ## 2026-02-24 (2)
 - CHARTER: добавлен обязательный процесс «Agent Bugfix Pipeline» (6 фаз: TRIAGE → GATHER → DIAGNOSE → FIX → VERIFY → LEARN)
 - Запрещено чинить агентов вручную без прохождения pipeline
