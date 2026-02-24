@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-02-24 (4) -- Update Safety Validation
+
+### CHARTER.md
+- Добавлена секция «Обновление OpenClaw» с обязательной pre/post валидацией
+- Канарейка: Illidan → Thrall → Sylvanas (обязательный порядок)
+- НИКОГДА не обновлять все серверы одновременно
+- При FAIL post-check -- остановить раскатку, доложить принцу
+- Обязательная проверка CHANGELOG на BREAKING changes
+
+### Причина
+- Brainstorm «защита от breaking changes»: 6 вариантов (3 pragmatic + 3 creative)
+- Выбран Constitution-Driven Validation -- формализация правил обновления
+- Скрипт `pre-update-check.sh`: 7 категорий проверок (config, service, skills, integrations, constitution, memory, connectivity)
+- Интеграция в `update-openclaw-all.sh` (pre/post gate на каждом сервере)
+
+---
+
 ## 2026-02-24 (3) -- Аудит и поправки
 
 ### CHARTER.md
