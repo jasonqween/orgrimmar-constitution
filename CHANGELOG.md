@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-02-24 (5) -- Security Policy
+
+### CHARTER.md
+- Новая секция «Безопасность» с 4 подразделами:
+  - Секреты и ключи: запрет plaintext в memory/git, ссылки только по имени
+  - Сетевая безопасность: обязательный UFW, SSH только через Tailscale, hardened sshd
+  - Действия агентов: запрет вывода ключей в чат/логи, env vars вместо inline
+  - Аудит: периодические security scans, pre-commit hooks, проверка при self-review
+
+### Причина
+- Security audit (3 kimi-воркера): найдено 4 CRITICAL, 4 HIGH, 5 MEDIUM уязвимостей
+- API ключи в plaintext в memory файлах (MEMORY.md, HOT_MEMORY.md)
+- PermitRootLogin yes на всех 3 серверах
+- UFW не установлен на Thrall, SSH открыт для интернета на всех серверах
+- Все исправлено: UFW hardened, SSH hardened, секреты вычищены из памяти
+
+---
+
 ## 2026-02-24 (4) -- Update Safety Validation
 
 ### CHARTER.md
