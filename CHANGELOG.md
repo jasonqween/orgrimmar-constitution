@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.0.5 (2026-02-26) -- PR #19: MISSION.md
+
+Добавлена миссия роя агентов: «Incremental Политбюро».
+
+### MISSION.md (новый)
+- Формулировка north star: наращивание автономии через adversarial review
+- Роли: генераторы (Тралл, Кель'тас) vs разрушители (Артас, Иллидан) + судья (Сильвана)
+- Self-inbox: квоты Run 60% / Improve 30% / Explore 10%, лимиты 3/день на генератора
+- Adversarial review: обязателен для всех self-generated задач
+- Stage gates: sandbox → canary → production
+- Метрики: автономность, полезность, эффективность, отклонения
+- Kill-criteria: burn rate, отклонения, goal drift, hallucination cascade
+- Roadmap: пилот Тралл (неделя 1-2) → Кель'тас (3-4) → полный рой (месяц 2)
+
+---
+
 ## v2.0.4 (2026-02-26) -- PR #18: CONVENTIONS.md
 
 Добавлен файл конвенций кода и операций.
