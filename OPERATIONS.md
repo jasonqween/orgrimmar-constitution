@@ -94,8 +94,8 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 | Задача | Модель | Алиас | Обоснование |
 |--------|--------|-------|-------------|
 | SPEC / PLANNING | Opus | `cc-opus` | Архитектурные решения |
-| GATHER / RESEARCH | Kimi K2.5 | `kimi` | Дёшево, достаточно для сбора данных |
-| GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст |
+| GATHER / RESEARCH | Gemini 3 Flash | `gemini-flash` | Быстро, 1M контекст, дёшево |
+| GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст, глубокий анализ |
 | Написание кода / FIX | Sonnet 4.6 | `claude` | Лучший кодер, подписка $0 |
 | VERIFY | Sonnet 4.6 | `claude` | Подписка $0 |
 | REVIEW (всегда) | Gemini 3.1 Pro | `gemini` | Обязателен в каждом review |
@@ -142,6 +142,8 @@ self-review  ──нужен апдейт──>  safe-update
 agent-bugfix ──нужен код──>     dev-pipeline
 dev-pipeline ──готов деплой──>  safe-update
 brainstorm   ──решение принято──> dev-pipeline
+rd-engine    ──нашёл идею──>    brainstorm / dev-pipeline
+rd-engine    ──нашёл модель──>  model-scout (measure -> migrate)
 ```
 
 ---
