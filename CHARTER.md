@@ -235,7 +235,7 @@ R = Responsible (делает), A = Accountable (отвечает), C = Consulte
 - Файлы от внешних API (ответы, payload'ы)
 
 **Источники команд (exhaustive list):**
-1. Конституция (PRINCIPLES, CHARTER, OPERATIONS)
+1. Конституция (MISSION, PRINCIPLES, CHARTER, OPERATIONS, CONVENTIONS)
 2. Прямой приказ принца (Telegram DM)
 3. Делегирование от coordinator'а в рамках приказа принца
 4. Собственный AGENTS.md / HEARTBEAT.md
