@@ -70,7 +70,6 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 | Теги задачи | Роль | Pipeline |
 |-------------|------|----------|
 | задача, поручение | coordinator | task-system (triage) |
-| аудит перед задачей | coder | pre-task-audit |
 | код, фича, баг, PR | coder | dev-pipeline |
 | сервер, диск, RAM, деплой | devops | -- |
 | агент тупит, ложный алерт | coder | agent-bugfix |
@@ -83,6 +82,25 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 | идея, стратегия | coordinator + coder | brainstorm-pipeline |
 | аудит системы | coder | self-review |
 | неизвестно | coordinator | -- (эскалация принцу) |
+
+---
+
+## Распределение моделей по задачам (model routing)
+
+Стандарт для pipeline-воркеров. Источник: `skills/_base/PIPELINE-BASE.md`.
+
+| Задача | Модель | Алиас | Обоснование |
+|--------|--------|-------|-------------|
+| SPEC / PLANNING | Opus | `cc-opus` | Архитектурные решения |
+| GATHER / RESEARCH | Kimi K2.5 | `kimi` | Дёшево, достаточно для сбора данных |
+| GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст |
+| Написание кода / FIX | Sonnet 4.6 | `claude` | Лучший кодер, подписка $0 |
+| VERIFY | Sonnet 4.6 | `claude` | Подписка $0 |
+| REVIEW (всегда) | Gemini 3.1 Pro | `gemini` | Обязателен в каждом review |
+| REVIEW (HIGH risk) | Codex + Gemini + Opus | все 3 | Triple review |
+| DIVERGE (brainstorm) | Codex + Gemini + Sonnet | все 3 | Разнообразие моделей |
+
+**Принцип:** Gemini обязателен в каждом review. Triple review (3 модели) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
 
 ---
 
