@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.0.4 (2026-02-26) -- PR #18: CONVENTIONS.md
+
+Добавлен файл конвенций кода и операций.
+
+### CONVENTIONS.md (новый)
+- Shell Security: двойные кавычки, SSH escaping, Python sys.argv, без дефисов в переменных
+- Artifact Delivery: воркеры пишут в файл, freshness check, timestamp для параллелизма
+- Timeout: формула для воркеров с sleep
+- Git: русские коммиты, ветки + PR
+- Язык: код=en, документация=ru, тире `–`, кавычки `«»`
+
+---
+
 ## v2.0.3 (2026-02-26) -- PR #17: control-plane → задачная система
 
 Замена устаревших ссылок на control-plane git на актуальную задачную систему (shared/tasks/ на Sylvanas).
