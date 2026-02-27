@@ -1,5 +1,22 @@
 # Changelog
 
+
+## v3.1.0 (2026-02-27) -- PR #24: Аудит после Playbook v1
+
+Фиксы по результатам 3-воркерного аудита конституции.
+
+### Добавлено
+- README.md: CONVENTIONS.md в таблицу документов
+- CHARTER.md: Self-Compliance Check -- обязательная самопроверка всех агентов
+- CHARTER.md: 7 терминов в глоссарий (pipeline, triage, watchdog, enforcer, worker роль/субагент, cross-review)
+- CONVENTIONS.md: git conventions (commit format, branch naming, PR size, squash merge) -- PR #23
+- OPERATIONS.md: git workflow, change levels L0-L3, cross-review, incidents P0-P3 -- PR #23
+
+### Исправлено
+- CHARTER.md: бюджет $20 -- уточнено как абсолютный потолок, не порог расширения
+- PRINCIPLES.md: P1/P2 парадокс деструктивных команд -- уточнена формулировка
+- CHARTER.md: роли reviewer добавлены для coder и devops -- PR #23
+
 ## v3.0.0 (2026-02-26) -- PR #20: Полный аудит конституции
 
 Переориентация миссии: с «автономные задачи» на «улучшение жизни вождя».
