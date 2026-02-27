@@ -142,7 +142,17 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 - PR от devops (Иллидан) -> ревьюит coder (Тралл)
 - Автор PR НЕ МОЖЕТ быть единственным reviewer
 - Запрещено: выполнять review от имени другого агента (нарушение = P1 инцидент)
-- CODEOWNERS: `/shared/constitution/` требует approve от принца
+- Cross-review -- процессное ограничение (оба агента на одном GitHub-аккаунте qwwiwi)
+
+### GitHub-доступы
+| Ресурс | Тралл | Иллидан | Принц |
+|--------|-------|---------|-------|
+| Монорепо (`qwwiwi/orgrimmar`) | full (qwwiwi) | full (qwwiwi, fine-grained token) | owner |
+| Конституция (`jasonqween/orgrimmar-constitution`) | fork+PR, merge ЗАПРЕЩЁН | read only | owner (jasonqween), единственный кто мержит |
+
+- Конституцию мержит ТОЛЬКО принц через GitHub UI
+- Агенты НЕ МОГУТ мержить PR в конституции (технически заблокировано)
+- Иллидан: fine-grained token с доступом только к монорепо
 
 ### Review формат (обязательный)
 Каждый review содержит:
