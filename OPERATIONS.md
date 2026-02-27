@@ -257,6 +257,52 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 **Правило:** секреты бэкапа (пароли restic) запрещено хранить в коде скриптов. Только в `/home/openclaw/.openclaw/.secrets/*.env` (chmod 600).
 
+
+---
+
+## Обновление OpenClaw (Update Procedure)
+
+Ответственный: devops (Иллидан). Cron: ежедневно 10:00 MSK.
+
+### Порядок обновления (канарейка)
+
+```
+1. PRE-CHECK
+   - npm view openclaw version  (доступная версия)
+   - openclaw --version на 3 серверах (текущие версии)
+   - Если версии совпадают -- СТОП, обновление не нужно
+
+2. КАНАРЕЙКА: Illidan (первый)
+   - openclaw update run
+   - Дождаться рестарта
+   - Проверить: openclaw --version, systemctl is-active openclaw
+   - Smoke test: агент отвечает на ping
+   - Если FAIL -- СТОП, алерт принцу, НЕ обновлять остальных
+
+3. РАСКАТКА: Thrall (второй)
+   - ssh root@100.104.191.127 "su - openclaw -c 'openclaw update run' && systemctl restart openclaw"
+   - Проверить: version + is-active + ping
+   - Если FAIL -- СТОП, алерт принцу
+
+4. РАСКАТКА: Sylvanas (последний)
+   - ssh root@100.107.104.91 "su - openclaw -c 'openclaw update run' && systemctl restart openclaw"
+   - Проверить: version + is-active + 6 агентов отвечают
+   - Если FAIL -- алерт принцу
+
+5. POST-CHECK
+   - Все 3 сервера на одной версии
+   - Все агенты отвечают
+   - Отчёт принцу: новая версия, все серверы OK
+```
+
+### Rollback
+
+Если обновление сломало сервер:
+1. `npm install -g openclaw@<предыдущая_версия>`
+2. `systemctl restart openclaw`
+3. Проверить восстановление
+4. Алерт принцу с описанием проблемы
+
 ---
 
 ## Heartbeats
