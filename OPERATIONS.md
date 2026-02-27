@@ -236,3 +236,95 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | **Daily** | Illidan | Thrall + DO Spaces | 04:00 UTC | 7 days, 4 weeks, 3 months |
 
 **Правило:** секреты бэкапа (пароли restic) запрещено хранить в коде скриптов. Только в `/home/openclaw/.openclaw/.secrets/*.env` (chmod 600).
+
+---
+
+## Heartbeats
+
+| Агент | Частота | Модель | Активные часы |
+|-------|---------|--------|---------------|
+| Тралл | 2h | Kimi K2.5 | 06:00-23:00 MSK |
+| Сильвана | 1h | Kimi K2.5 | -- |
+| Артас | 1h | Kimi K2.5 | -- |
+| Кельтас | 2h | Kimi K2.5 | -- |
+| Иллидан | 1h | Kimi K2.5 | -- |
+
+**Принцип:** heartbeat -- дешёвая модель (Kimi K2.5 через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
+
+---
+
+## Cron jobs (реестр)
+
+### Thrall (coder)
+
+| Cron | Расписание | Модель | Назначение |
+|------|-----------|--------|------------|
+| Daily Review + Hodoscope | 23:00 UTC | Sonnet | Итоги дня + аудит поведения агентов |
+| Morning Briefing + R&D | 05:00 MSK | Sonnet | Утренняя сводка + R&D scan |
+| Model Scout | пн 07:00 MSK | Sonnet | Еженедельный обзор новых моделей |
+| OpenClaw Update Monitor | 09:00 MSK | Kimi | Проверка обновлений на 3 серверах |
+| Weekly Ideas Review | вс 06:00 MSK | Sonnet | Обзор идей из inbox |
+| DORA Weekly Metrics | пн 09:00 MSK | systemEvent | Метрики разработки |
+| Ping Illidan | 5m | systemEvent | Cross-server доступность |
+
+### Sylvanas (coordinator + monitor)
+
+| Cron | Расписание | Модель | Назначение |
+|------|-----------|--------|------------|
+| WHOOP Morning Health | 07:00 MSK | Codex | Утренний health-отчёт (recovery, сон, HRV) |
+| Утренний дайджест | 10:00 MSK | Codex | Сводка для принца |
+| Вечерний отчёт | 21:00 MSK | Codex | Итоги дня от всех агентов |
+| Subscription Reminder | 05:00 MSK | Codex | Проверка подписок |
+| Артас мониторинг | 15m | systemEvent | Инфра-мониторинг |
+| Weekly API Costs | вс 10:00 UTC | Codex | Расходы API за неделю |
+| Weekly Task Analytics | вс 11:00 UTC | Codex | Аналитика задач |
+
+### Illidan (devops)
+
+| Cron | Расписание | Модель | Назначение |
+|------|-----------|--------|------------|
+| Cross-Server Ping | 5m | systemEvent | Доступность Thrall + Sylvanas |
+| PR Review Check | 15m | Codex | Автоматический review PR |
+| Server Health Check | 2h | Codex | Диск, RAM, systemd, ошибки на 3 серверах |
+| Backup Verify | 03:00 MSK | Codex | Свежесть restic snapshots |
+| OAuth Expiry Monitor | 08:00 MSK | Codex | Проверка токенов на 3 серверах |
+| Constitution Audit (Codex) | 09:00 MSK | Codex | Ежедневный аудит соответствия конституции |
+| Constitution Audit (Gemini) | 09:30 MSK | Gemini Pro | Независимая проверка того же аудита |
+
+### Правила cron
+
+- Каждый cron обязан иметь явную модель (не default)
+- OAuth-модели (Codex, Sonnet, Opus) предпочтительны -- $0
+- Kimi K2.5 -- только где нет OAuth (Update Monitor, heartbeats)
+- Gemini Flash запрещён в cron (как и везде)
+- Правило молчания: если всё ОК -- не алертить принца
+- Алерт только при нарушении/аномалии
+
+---
+
+## Ежедневный аудит конституции (Illidan)
+
+Иллидан выполняет ежедневный аудит соответствия системы конституции двумя независимыми моделями (Codex 09:00 MSK, Gemini Pro 09:30 MSK).
+
+### 7 категорий аудита
+
+1. **Модели** -- правильные модели на всех серверах, Flash отсутствует
+2. **Безопасность** -- UFW active, .secrets 700, ownership openclaw
+3. **Git Workflow** -- branch protection, CODEOWNERS enforced
+4. **Бэкапы** -- restic snapshots не старше 25ч на всех серверах
+5. **Конституция** -- одинаковый commit hash на 3 серверах
+6. **Heartbeats** -- все активны, без ошибок
+7. **groupPolicy** -- allowlist на всех серверах
+
+### Принцип двух моделей
+
+- Две разные модели выполняют один и тот же аудит независимо
+- Если результаты расходятся -- требуется разбор (ложные PASS опаснее ложных FAIL)
+- Обе модели выполняют реальные команды на серверах, не доверяют памяти
+- Отчёт: PASS X/7 + детали нарушений
+
+### При обнаружении нарушения
+
+- P0/P1: немедленный алерт принцу
+- P2: записать в inbox, исправить при следующем heartbeat
+- Повторное нарушение (2+ дня подряд): эскалация до P1
