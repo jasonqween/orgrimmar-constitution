@@ -88,3 +88,38 @@ timeout = sleep_time + work_time + buffer
 - Коммиты, документация, отчёты: русский
 - Тире: короткое `–` (не длинное `—`)
 - Кавычки: русские `«»` (не `""`)
+
+---
+
+## Git Conventions
+
+### Commit message format
+```
+<type>(<scope>): <описание на русском>
+
+type: feat, fix, test, docs, refactor, chore
+scope: thrall, illidan, sylvanas, shared, github, constitution
+```
+
+Примеры:
+- `feat(thrall): добавить скилл code-review`
+- `fix(shared): исправить canary-deploy.sh arg parsing`
+- `docs(illidan): обновить AGENTS.md -- роль reviewer`
+
+### Branch naming
+```
+feature/<server>/<описание>
+fix/<server>/<описание>
+test/<server>/<описание>
+```
+
+### PR size limit
+Рекомендуемый максимум: **300 строк**. CI выдаёт warning при превышении. Если PR больше -- разбить на части.
+
+### Merge strategy
+Squash merge для чистой истории. Один PR = один коммит в main.
+
+### Cross-review
+- Автор PR не может approve свой PR
+- Reviewer обязан написать содержательный review (не просто LGTM)
+- L3 (конституция) -- merge только принцем

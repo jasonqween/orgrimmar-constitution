@@ -106,6 +106,69 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 
 ---
 
+## Git Workflow и Change Management
+
+### Репозиторий
+- Монорепо: `qwwiwi/orgrimmar` (GitHub, private)
+- Структура: `thrall/`, `sylvanas/`, `illidan/`, `shared/`, `.github/`
+- Branch protection на `main`: require 1 approving review, no force push
+
+### PR-first правило
+Все изменения в монорепо идут через Pull Request. Прямой push в main запрещён.
+
+### Change Levels (классификация изменений)
+
+| Level | Описание | Примеры | Review | Merge |
+|-------|----------|---------|--------|-------|
+| **L0** | Косметика | Typo, комментарии, README | Любой reviewer | Reviewer |
+| **L1** | Рабочие файлы | Скрипты, конфиги, AGENTS.md, скиллы | Cross-reviewer | Reviewer |
+| **L2** | Инфраструктура | Deploy scripts, auth, CI, multi-server | Cross-reviewer + CI green | Reviewer |
+| **L3** | Критическое | Конституция, новый/удаление агента | Cross-reviewer + принц | Принц |
+
+Полная матрица: `shared/playbook/CHANGE-CLASSIFICATION.md`.
+
+### Cross-review правило
+- PR от coder (Тралл) -> ревьюит devops (Иллидан)
+- PR от devops (Иллидан) -> ревьюит coder (Тралл)
+- Автор PR НЕ МОЖЕТ быть единственным reviewer
+- Запрещено: выполнять review от имени другого агента (нарушение = P1 инцидент)
+- CODEOWNERS: `/shared/constitution/` требует approve от принца
+
+### Review формат (обязательный)
+Каждый review содержит:
+- Change Level (L0/L1/L2/L3)
+- Чеклист: логика, безопасность, стиль, тесты, breaking changes
+- Конкретные замечания с файлом и строкой
+- Вердикт: APPROVE / REQUEST_CHANGES / COMMENT
+
+Просто «LGTM» без анализа = невалидный review.
+
+### Branch naming
+```
+feature/<server>/<описание>   -- новый функционал
+fix/<server>/<описание>       -- исправление
+test/<server>/<описание>      -- тестовые изменения
+```
+
+### Deploy order (канарейка)
+Illidan -> Thrall -> Sylvanas. При fail на любом этапе -- стоп + rollback.
+
+### CI (автоматические проверки)
+5 checks на каждый PR: lint JSON/YAML, shellcheck, no-secrets, PR size, merge conflicts.
+
+### Incident Severity
+
+| Severity | Описание | SLA | Пример |
+|----------|----------|-----|--------|
+| **P0** | Прод упал, данные под угрозой | Немедленно | Все серверы down, утечка секретов |
+| **P1** | Критический сервис деградирован | 1 час | Один сервер down, агент неуправляем |
+| **P2** | Некритичная проблема | 24 часа | Ложные алерты, CI broken |
+| **P3** | Улучшение, техдолг | Бэклог | Рефакторинг, оптимизация |
+
+Полные playbook: `shared/playbook/INCIDENT-RESPONSE.md`, `shared/playbook/HOTFIX-PROTOCOL.md`.
+
+---
+
 ## Эскалация
 
 | Триггер | Уровень | Действие |
