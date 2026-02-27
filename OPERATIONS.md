@@ -262,7 +262,6 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | Daily Review + Hodoscope | 23:00 UTC | Sonnet | Итоги дня + аудит поведения агентов |
 | Morning Briefing + R&D | 05:00 MSK | Sonnet | Утренняя сводка + R&D scan |
 | Model Scout | пн 07:00 MSK | Sonnet | Еженедельный обзор новых моделей |
-| OpenClaw Update Monitor | 09:00 MSK | Kimi | Проверка обновлений на 3 серверах |
 | Weekly Ideas Review | вс 06:00 MSK | Sonnet | Обзор идей из inbox |
 | DORA Weekly Metrics | пн 09:00 MSK | systemEvent | Метрики разработки |
 | Ping Illidan | 5m | systemEvent | Cross-server доступность |
@@ -290,6 +289,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | OAuth Expiry Monitor | 08:00 MSK | Codex | Проверка токенов на 3 серверах |
 | Constitution Audit (Codex) | 09:00 MSK | Codex | Ежедневный аудит соответствия конституции |
 | Constitution Audit (Gemini) | 09:30 MSK | Gemini Pro | Независимая проверка того же аудита |
+| OpenClaw Update Check | 10:00 MSK | Codex | Проверка + автообновление (канарейка: Illidan→Thrall→Sylvanas) |
 
 ### Правила cron
 
