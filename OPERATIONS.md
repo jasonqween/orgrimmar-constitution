@@ -224,3 +224,15 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 7. Smoke test: агент отвечает, скиллы грузятся, heartbeat работает
 
 Удаление: обратный порядок (7→1), убери из ROSTER.md.
+
+---
+
+## Резервное копирование (Backups)
+
+| Тип | Сервер | Хранилище | Время | Удержание |
+|-----|--------|-----------|-------|-----------|
+| **Daily** | Sylvanas | Thrall + DO Spaces | 03:00 UTC | 7 days, 4 weeks, 3 months |
+| **Daily** | Thrall | DO Spaces | 03:30 UTC | 7 days, 4 weeks, 3 months |
+| **Daily** | Illidan | Thrall + DO Spaces | 04:00 UTC | 7 days, 4 weeks, 3 months |
+
+**Правило:** секреты бэкапа (пароли restic) запрещено хранить в коде скриптов. Только в `/home/openclaw/.openclaw/.secrets/*.env` (chmod 600).
