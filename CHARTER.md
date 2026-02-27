@@ -123,38 +123,42 @@ _Операционные правила. Обновляется по мере �
 |--------|--------|-----|
 | Архитектура, анализ, принятие решений | Opus | OAuth |
 | Написание кода | Codex (GPT-5.3) | OAuth |
-| Воркеры (research, review, сбор данных) | Sonnet | OAuth ($0), приоритет |
-| Запасной воркер (если Sonnet не справился) | Kimi K2.5 (moonshotai/kimi-k2.5) | OpenRouter |
+| Воркеры (research, review, сбор данных) | Grok 4.1 Fast (x-ai/grok-4.1-fast) | OpenRouter |
+| Heartbeat | Grok 4.1 Fast | OpenRouter |
+| Fallback воркер | Gemini Flash / Codex | OpenRouter / OAuth |
 
 #### Иллидан (devops)
 | Задача | Модель | Тип |
 |--------|--------|-----|
 | Основная (review, мониторинг, анализ) | Gemini Pro | OpenRouter |
-| Heartbeat, лёгкие проверки | Kimi K2.5 (moonshotai/kimi-k2.5) | OpenRouter |
+| Heartbeat, лёгкие проверки | Grok 4.1 Fast (x-ai/grok-4.1-fast) | OpenRouter |
 | Code review L1+ | Codex (GPT-5.3) | OAuth |
-| Запасной | Kimi K2.5 (moonshotai/kimi-k2.5) | OpenRouter |
+| Воркеры (research, сбор данных) | Grok 4.1 Fast | OpenRouter |
+| Запасной | Gemini Flash | OpenRouter |
 
 #### Sylvanas агенты (Сильвана, Артас)
 | Задача | Модель | Тип |
 |--------|--------|-----|
 | Код, сложные задачи | Codex (GPT-5.3) | OAuth |
-| Обычные задачи, heartbeat | Kimi K2.5 (moonshotai/kimi-k2.5) | OpenRouter |
+| Обычные задачи, heartbeat | Grok 4.1 Fast (x-ai/grok-4.1-fast) | OpenRouter |
+| Воркеры (research, сбор данных) | Grok 4.1 Fast | OpenRouter |
 | Глубокий анализ, длинный контекст | Gemini Pro | OpenRouter |
 
 #### Кельтас (creator, контент)
 | Задача | Модель | Тип |
 |--------|--------|-----|
 | Написание постов, финальный текст | Opus (Claude 4.6) | Anthropic OAuth |
-| Субагенты (ресёрч, API, метрики, веб) | Sonnet (Claude 4.6) | Anthropic OAuth |
+| Субагенты (ресёрч, API, метрики, веб) | Grok 4.1 Fast (x-ai/grok-4.1-fast) | OpenRouter |
 | Fallback основной | Codex (GPT-5.3) | OAuth |
-| Fallback субагенты | Codex / Kimi K2.5 | OAuth / OpenRouter |
-| Heartbeat | Kimi K2.5 (moonshotai/kimi-k2.5) | OpenRouter |
+| Fallback субагенты | Codex / Gemini Flash | OAuth / OpenRouter |
+| Heartbeat | Grok 4.1 Fast | OpenRouter |
 
 #### Gemini Flash -- ограниченное использование
 - **Gemini Flash** (gemini-3-flash-preview) -- ЗАПРЕЩЁН как основная модель агента
 - Разрешён ТОЛЬКО для worker-задач: ресёрч, сканирование файлов, анализ идей, сбор данных
 - ЗАПРЕЩЁН для: написания кода, правки конфигов, архитектурных решений, ответов пользователю
-- Алиас `kimi` = `openrouter/moonshotai/kimi-k2.5` (НЕ Gemini Flash)
+- Алиас `grok` = `openrouter/x-ai/grok-4.1-fast` (воркеры, heartbeat, ресёрч)
+- Алиас `kimi` = `openrouter/moonshotai/kimi-k2.5` (legacy, fallback)
 
 #### Запрещено
 - Самостоятельная смена модели агентом (нарушение = P1 инцидент)
