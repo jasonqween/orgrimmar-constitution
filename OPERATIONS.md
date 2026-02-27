@@ -104,7 +104,7 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 | Задача | Модель | Алиас | Обоснование |
 |--------|--------|-------|-------------|
 | SPEC / PLANNING | Opus | `cc-opus` | Архитектурные решения |
-| GATHER / RESEARCH | Gemini 3 Flash | `gemini-flash` | Быстро, 1M контекст, дёшево |
+| GATHER / RESEARCH | Sonnet (OAuth $0) | `sonnet` | Быстро, 1M контекст, дёшево |
 | GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст, глубокий анализ |
 | Написание кода / FIX | Sonnet 4.6 | `claude` | Лучший кодер, подписка $0 |
 | VERIFY | Sonnet 4.6 | `claude` | Подписка $0 |
@@ -260,48 +260,11 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 ---
 
-## Обновление OpenClaw (Update Procedure)
+## Обновление OpenClaw
 
 Ответственный: devops (Иллидан). Cron: ежедневно 10:00 MSK.
-
-### Порядок обновления (канарейка)
-
-```
-1. PRE-CHECK
-   - npm view openclaw version  (доступная версия)
-   - openclaw --version на 3 серверах (текущие версии)
-   - Если версии совпадают -- СТОП, обновление не нужно
-
-2. КАНАРЕЙКА: Illidan (первый)
-   - openclaw update run
-   - Дождаться рестарта
-   - Проверить: openclaw --version, systemctl is-active openclaw
-   - Smoke test: агент отвечает на ping
-   - Если FAIL -- СТОП, алерт принцу, НЕ обновлять остальных
-
-3. РАСКАТКА: Thrall (второй)
-   - ssh root@100.104.191.127 "su - openclaw -c 'openclaw update run' && systemctl restart openclaw"
-   - Проверить: version + is-active + ping
-   - Если FAIL -- СТОП, алерт принцу
-
-4. РАСКАТКА: Sylvanas (последний)
-   - ssh root@100.107.104.91 "su - openclaw -c 'openclaw update run' && systemctl restart openclaw"
-   - Проверить: version + is-active + 6 агентов отвечают
-   - Если FAIL -- алерт принцу
-
-5. POST-CHECK
-   - Все 3 сервера на одной версии
-   - Все агенты отвечают
-   - Отчёт принцу: новая версия, все серверы OK
-```
-
-### Rollback
-
-Если обновление сломало сервер:
-1. `npm install -g openclaw@<предыдущая_версия>`
-2. `systemctl restart openclaw`
-3. Проверить восстановление
-4. Алерт принцу с описанием проблемы
+Порядок канарейки: Illidan → Thrall → Sylvanas.
+Полная процедура: `scripts/update-openclaw-all.sh` и `skills/safe-update/`.
 
 ---
 
@@ -321,48 +284,15 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 ## Cron jobs (реестр)
 
-### Thrall (coder)
-
-| Cron | Расписание | Модель | Назначение |
-|------|-----------|--------|------------|
-| Daily Review + Hodoscope | 23:00 UTC | Sonnet | Итоги дня + аудит поведения агентов |
-| Morning Briefing + R&D | 05:00 MSK | Sonnet | Утренняя сводка + R&D scan |
-| Model Scout | пн 07:00 MSK | Sonnet | Еженедельный обзор новых моделей |
-| Weekly Ideas Review | вс 06:00 MSK | Sonnet | Обзор идей из inbox |
-| DORA Weekly Metrics | пн 09:00 MSK | systemEvent | Метрики разработки |
-| Ping Illidan | 5m | systemEvent | Cross-server доступность |
-
-### Sylvanas (coordinator + monitor)
-
-| Cron | Расписание | Модель | Назначение |
-|------|-----------|--------|------------|
-| WHOOP Morning Health | 07:00 MSK | Codex | Утренний health-отчёт (recovery, сон, HRV) |
-| Утренний дайджест | 10:00 MSK | Codex | Сводка для принца |
-| Вечерний отчёт | 21:00 MSK | Codex | Итоги дня от всех агентов |
-| Subscription Reminder | 05:00 MSK | Codex | Проверка подписок |
-| Артас мониторинг | 15m | systemEvent | Инфра-мониторинг |
-| Weekly API Costs | вс 10:00 UTC | Codex | Расходы API за неделю |
-| Weekly Task Analytics | вс 11:00 UTC | Codex | Аналитика задач |
-
-### Illidan (devops)
-
-| Cron | Расписание | Модель | Назначение |
-|------|-----------|--------|------------|
-| Cross-Server Ping | 5m | systemEvent | Доступность Thrall + Sylvanas |
-| PR Review Check | 15m | Codex | Автоматический review PR |
-| Server Health Check | 2h | Codex | Диск, RAM, systemd, ошибки на 3 серверах |
-| Backup Verify | 03:00 MSK | Codex | Свежесть restic snapshots |
-| OAuth Expiry Monitor | 08:00 MSK | Codex | Проверка токенов на 3 серверах |
-| Constitution Audit (Codex) | 09:00 MSK | Codex | Ежедневный аудит соответствия конституции |
-| Constitution Audit (Gemini) | 09:30 MSK | Gemini Pro | Независимая проверка того же аудита |
-| OpenClaw Update Check | 10:00 MSK | Codex | Проверка + автообновление (канарейка: Illidan→Thrall→Sylvanas) |
+Полный реестр cron jobs: `shared/cron-registry.md` (не дублируется в конституции).
+Каждый сервер: Thrall (7 cron), Sylvanas (7 cron), Illidan (8 cron).
 
 ### Правила cron
 
 - Каждый cron обязан иметь явную модель (не default)
 - OAuth-модели (Codex, Sonnet, Opus) предпочтительны -- $0
 - Kimi K2.5 -- только где нет OAuth (Update Monitor, heartbeats)
-- Gemini Flash запрещён в cron (как и везде)
+- Sonnet запрещён в cron (как и везде)
 - Правило молчания: если всё ОК -- не алертить принца
 - Алерт только при нарушении/аномалии
 
