@@ -596,6 +596,83 @@ ssh root@<сервер> 'cp /home/openclaw/.openclaw/openclaw.json.bak.<дата
 sudo -u openclaw openclaw models list
 ```
 
+
+#### 8. Стандарт конфигурации openclaw.json (обязателен на всех серверах)
+
+> **Источник проблемы (2026-02-28):** Аудит выявил 5 классов ошибок конфигурации,
+> которые не были покрыты конституцией: инвертированный формат алиасов, отсутствие
+> провайдеров в , неавторизованные модели в каталоге OpenRouter,
+> отсутствие обязательных алиасов, несоответствие имён агентов.
+> Следствие:  в Telegram не показывал провайдер ; агент на
+> сервере Illidan носил имя «Тралл» вместо «Иллидан». Этот раздел фиксирует
+> стандарт, чтобы такие ошибки выявлялись при аудите, а не случайно.
+
+---
+
+##### 8.1 Имена агентов (обязательная таблица)
+
+Поле  в  должно точно соответствовать:
+
+| Сервер   | uid=0(root) gid=0(root) groups=0(root)      |       |
+|----------|-----------|-------------|
+| Sylvanas |  |   |
+| Sylvanas |   |      |
+| Sylvanas | |  |
+| Thrall   |     |      |
+| Illidan  |     |    |
+
+Несоответствие = VIOLATION (фиксируется при еженедельном аудите Иллидана).
+
+---
+
+##### 8.2 Формат алиасов ()
+
+**Правильный формат** (ключ = полный , значение = display-имя):
+
+
+
+**Запрещённый (инвертированный) формат** — ключ = короткое имя, значение = model-id:
+
+
+
+Последствия инвертированного формата:
+- OpenClaw нормализует ключ «opus» как  (несуществующая модель)
+- В Telegram  провайдер  не отображается (auth не резолвится)
+- Model                                      Input      Ctx      Local Auth  Tags
+anthropic/claude-sonnet-4-5                text+image 195k     no    yes   default,configured,alias:sonnet
+claude-cli/claude-opus-4-6                 -          -        -     -     fallback#1,configured,missing
+anthropic/claude-opus-4-6                  text+image 195k     no    yes   fallback#2,configured,alias:opus показывает  вместо 
+
+Все 6 алиасов обязательны на каждом сервере. Отсутствие любого = VIOLATION.
+
+---
+
+##### 8.3 Обязательная структура 
+
+Три провайдера **обязательны** в  на каждом сервере.
+ и OAuth-токены хранятся в , не в 
+(исключение: openrouter API key допустим в ).
+
+
+
+Отсутствие провайдера  или  = VIOLATION.
+Наличие любой модели в  за пределами списка выше = VIOLATION.
+
+---
+
+##### 8.4 Чеклист аудита конфигурации (Иллидан, еженедельно)
+
+
+
+Проверка одной командой на каждом сервере:
+Model                                      Input      Ctx      Local Auth  Tags
+openai-codex/gpt-5.3-codex                 text+image 266k     no    yes   default,configured,alias:codex
+openrouter/x-ai/grok-4.1-fast              text+image 1953k    no    yes   fallback#1,configured,alias:grok
+anthropic/claude-opus-4-6                  text+image 195k     no    no    configured,alias:opus
+openrouter/google/gemini-3.1-pro-preview   text+image 1024k    no    yes   configured,alias:gemini
+openrouter/google/gemini-3-flash-preview   text+image 1024k    no    yes   configured,alias:gemini-flash
+openrouter/moonshotai/kimi-k2.5            text+image 256k     no    yes   configured,alias:kimi
+
 ---
 
 ### Бюджет API ($20/сутки)
@@ -903,7 +980,7 @@ R = Responsible (делает), A = Accountable (отвечает), C = Consulte
 
 ### Каналы
 - **Telegram DM** -- основной канал каждого агента с принцем
-- **Orgrimmar форум** (-1003832602486) -- координация между агентами
+- **Orgrimmar форум** -- координация между агентами
 - **Задачная система** (shared/tasks/ на Sylvanas) -- задачи и координация между серверами
 
 ### Правила
