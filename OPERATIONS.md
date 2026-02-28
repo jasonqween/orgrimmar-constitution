@@ -848,7 +848,7 @@ from: prince|silvana|thrall|arthas|kaelthas|illidan|self
 assignee: имя_агента
 status: new|in progress|pipeline|blocked|review|done
 stage: текст текущего этапа
-priority: normal|high|critical
+priority: P0|P1|P2|P3
 needs_chief: yes|no
 blocked_reason: текст (если needs_chief=yes)
 created: YYYY-MM-DD HH:MM UTC
