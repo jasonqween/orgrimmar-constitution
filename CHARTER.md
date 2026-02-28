@@ -189,13 +189,13 @@ Triple Review запускается при: P0/P1 баги, security-правк
 
 | Задача | Модель | Алиас | Тип |
 |--------|--------|-------|-----|
-| Основная (мониторинг, алерты, отчёты) | Grok 4.1 Fast | `grok` | OpenRouter |
+| Основная (мониторинг, алерты, отчёты) | Claude Opus 4.6 | `opus` | Anthropic OAuth |
 | Глубокий анализ, code review | GPT-5.3 Codex | `codex` | OAuth |
-| Длинный контекст (>50K) | Gemini 3.1 Pro | `gemini` | OpenRouter |
+| Длинный контекст (>50K) | GPT-5.3 Codex | `codex` | OAuth |
 | Heartbeat | Grok 4.1 Fast | `grok` | OpenRouter |
 
-**Primary в конфиге:** `openrouter/x-ai/grok-4.1-fast`
-**Fallback-цепочка:** Grok -> Codex
+**Primary в конфиге:** `anthropic/claude-opus-4-6`
+**Fallback-цепочка:** Opus -> Codex
 **Субагенты:** Grok (default)
 
 ##### Кель'тас (creator, сервер Sylvanas)
@@ -259,7 +259,7 @@ Triple Review запускается при: P0/P1 баги, security-правк
 |-------|---------|------------|------------|
 | Тралл | Opus (OAuth) | Codex (OAuth) | Grok (OR) |
 | Сильвана | Codex (OAuth) | Grok (OR) | -- |
-| Артас | Grok (OR) | Codex (OAuth) | -- |
+| Артас | Opus (OAuth) | Codex (OAuth) | -- |
 | Кель'тас | Opus (OAuth) | Codex (OAuth) | Grok (OR) |
 | Иллидан | Kimi K2.5 (OR) | Codex (OAuth) | -- |
 
