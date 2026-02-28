@@ -360,29 +360,36 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 ## Heartbeats
 
-| Агент | Частота | Модель | Активные часы |
-|-------|---------|--------|---------------|
-| Тралл | 2h | Grok 4.1 Fast | 06:00-23:00 MSK |
-| Сильвана | 1h | Grok 4.1 Fast | -- |
-| Артас | 1h | Grok 4.1 Fast | -- |
-| Кельтас | 2h | Grok 4.1 Fast | -- |
-| Иллидан | 1h | Kimi K2.5 | -- |
+| Агент | Частота | Модель | Активные часы | Вызовов/день |
+|-------|---------|--------|---------------|-------------|
+| Тралл | 2h | Grok 4.1 Fast | 06:00-23:00 MSK | ~9 |
+| Сильвана | 1h | Grok 4.1 Fast | 24/7 | ~24 |
+| Артас | 2h | Grok 4.1 Fast | 24/7 | ~12 |
+| Кельтас | 2h | Grok 4.1 Fast | 24/7 | ~12 |
+| Иллидан | 1h | Kimi K2.5 | 24/7 | ~24 |
+
+**Итого:** ~81 вызов/день, ~$0.80/день.
 
 **Принцип:** heartbeat -- дешёвая модель (Grok 4.1 Fast через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
+Координатор (Сильвана) -- 1h. Мониторинг (Артас) и контент (Кельтас) -- 2h. DevOps (Иллидан) -- 1h.
 
 ---
 
 ## Cron jobs (реестр)
 
 Полный реестр cron jobs: `shared/cron-registry.md` (не дублируется в конституции).
-Каждый сервер: Thrall (7 cron), Sylvanas (7 cron), Illidan (8 cron).
+
+| Сервер | OpenClaw cron | System cron | Heartbeat |
+|--------|--------------|-------------|-----------|
+| Thrall | 7 | 11 | 2h Grok |
+| Sylvanas | 0 | 16 | 1h/2h Grok |
+| Illidan | 0 | 6 | 1h Kimi |
 
 ### Правила cron
 
-- Каждый cron обязан иметь явную модель (не default)
-- OAuth-модели (Codex, Sonnet, Opus) предпочтительны -- $0
-- Kimi K2.5 -- только где нет OAuth (Update Monitor, heartbeats)
-- Sonnet запрещён в cron (как и везде)
+- Все agentTurn cron = Grok 4.1 Fast (стандарт)
+- 0 Sonnet, 0 Opus в cron'ах (Opus/Codex только как spawned workers внутри задач)
+- systemEvent cron'ы = $0 (не тратят модель)
 - Правило молчания: если всё ОК -- не алертить принца
 - Алерт только при нарушении/аномалии
 
