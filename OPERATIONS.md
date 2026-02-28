@@ -107,8 +107,17 @@ new -> in progress -> [pipeline] -> review -> done
 **Ролевые скиллы:**
 | Агент | Скилл | Назначение |
 |-------|-------|------------|
-| Артас | `chat-alerts` | Алерт принцу при @mention/reply в чатах. Обязательно включает ссылку t.me/c/CHAT_ID/MESSAGE_ID |
+| Тралл | `server-ops` | SSH-операции на Sylvanas/Illidan: maintenance, конфиги, рестарты |
+| Тралл | `cross-review` | Ревью PR: change levels, merge rules, раскатка |
+| Тралл | `worker-orchestration` | Spawn воркеров: модели, уведомления, коммуникация |
+| Тралл | `openclaw-updater` | Обновление OpenClaw на всех серверах |
+| Сильвана | `task-triage` | Inbox triage + SLA мониторинг задач |
+| Артас | `chat-alerts` | Алерт принцу при @mention/reply с ссылкой t.me/c/CHAT_ID/MESSAGE_ID |
+| Артас | `chat-ops` | JSONL логирование, per-chat режимы, watchdog задач |
 | Артас | `topic-monitor` | Мониторинг тем через веб-поиск |
+| Кель'тас | `content-engine` | Классификация входящих + pipeline поста |
+| Иллидан | `server-rescue` | Incident response: диагностика, откат, восстановление |
+| Иллидан | `cross-review` | Ревью PR: change levels, merge rules, раскатка |
 Нарушение (отсутствие базового скилла) = VIOLATION. Иллидан проверяет при еженедельном аудите.
 
 **Обязательность:**
