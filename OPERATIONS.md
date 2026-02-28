@@ -715,3 +715,169 @@ URL берутся ТОЛЬКО из данных парсера (теги `[htt
 | `scripts/whoop-token-refresh.sh` | Sylvanas | WHOOP OAuth token refresh |
 
 Cron ID потоков -- в `shared/cron-registry.md` (source of truth для расписаний).
+## Task Dashboard (task.orgrimmar.xyz)
+
+### Общее
+
+| Параметр | Значение |
+|----------|----------|
+| URL | `task.orgrimmar.xyz` |
+| Хостинг | Timeweb VPS (213.171.6.132) |
+| Данные | Sylvanas (`/home/openclaw/.openclaw/shared/tasks/`) |
+| Обновление | board.json каждые 15 мин (cron на Sylvanas) |
+| Mobile-first | Оптимизирован под Telegram WebView (iPhone) |
+
+### Авторизация
+
+Два метода параллельно:
+1. **Пароль** -- SHA-256 hash в клиентском JS. Значение пароля хранится в `shared/secrets/dashboard-password.txt` (не в конституции).
+2. **Google Sign-In** -- admin email в конфиге. Полный доступ = admin. Остальные email = пустая доска.
+
+### Дизайн
+
+Shuttle-style тёмный минимализм.
+
+**Цветовая палитра:**
+
+| Токен | Значение | Назначение |
+|-------|----------|------------|
+| `--bg` | `#000000` | Фон |
+| `--bg-elev-1` | `#0A0A0A` | Карточки |
+| `--bg-elev-2` | `#111111` | Hover-состояния |
+| `--surface-hover` | `#171717` | Hover карточек |
+| `--border-subtle` | `#232323` | Границы |
+| `--text-primary` | `#FFFFFF` | Заголовки |
+| `--text-secondary` | `#B3B3B3` | Описания |
+| `--text-tertiary` | `#7A7A7A` | Мета-данные |
+| `--accent` | `#2F6BFF` | Кнопки, активные ссылки |
+| `--error` | `#EF4444` | Ошибки, blocked |
+| `--success` | `#16A34A` | Done |
+| `--warning` | `#F59E0B` | In progress, pipeline |
+
+**Типографика:**
+
+- Основной шрифт: Inter (500/700/800)
+- Моноширинный: JetBrains Mono (ID задач)
+- H1: 32px, weight 800, letter-spacing -0.02em
+- H2: 20px, weight 700
+- Мета: 12px, weight 500
+
+**Компоненты:**
+
+- Радиус карточек: 16px (`--r-lg`)
+- Радиус бейджей: 22px (`--r-md`)
+- Радиус кнопок: 10px (`--r-sm`)
+- Анимации: 140ms/200ms/280ms, cubic-bezier(0.2, 0.8, 0.2, 1)
+- Карточки -- аккордеон (expand/collapse)
+- Sticky header + tabs
+- URL в title/description -- автолинкификация (кликабельные, цвет `#5b9aff`)
+
+### Вкладки
+
+4 вкладки, фиксированная ширина, равные:
+
+| Вкладка | Содержимое | Кнопки |
+|---------|-----------|--------|
+| Ideas | Идеи из `ideas/` | Archive, Activate |
+| Inbox | Новые задачи из `inbox/` | Archive, Activate |
+| Active | Задачи в работе из `active/` (включая pipeline, review, blocked) | Archive, Done |
+| Done | Завершённые из `done/` | Archive, Activate |
+
+### Статусы задач (бейджи)
+
+| Статус | Цвет бейджа | Описание |
+|--------|------------|----------|
+| new | `#3b82f6` (синий) | Новая задача |
+| in progress | `#f59e0b` (жёлтый) | В работе |
+| pipeline | `#f59e0b` (жёлтый) | Выполняется pipeline |
+| blocked | `#ef4444` (красный) | Заблокирована (+ CHIEF бейдж если needs_chief) |
+| review | `#a855f7` (фиолетовый) | На ревью |
+| done | `#22c55e` (зелёный) | Завершена |
+
+### Карточка задачи
+
+Каждая карточка содержит:
+- **Бейдж статуса** -- цвет по таблице выше
+- **From** -- кто создал (prince/silvana/thrall/etc)
+- **Title** -- заголовок (URL автолинкификация)
+- **Created** -- дата создания
+- **CHIEF бейдж** -- красный, если `needs_chief=yes`
+- **Expand:** ID, From, Assignee, Status, Stage, Created, Updated
+- **Description** -- полный текст (URL автолинкификация)
+- **Кнопки действий** -- Archive / Done / Activate
+
+### API
+
+Endpoints на `task.orgrimmar.xyz/api/`:
+
+| Endpoint | Метод | Auth | Описание |
+|----------|-------|------|----------|
+| `/api/health` | GET | нет | `{"ok": true, "pending": N}` |
+| `/api/archive` | POST | Bearer token | `{"id": "TASK-..."}` -- перемещает в done |
+| `/api/activate` | POST | Bearer token | `{"id": "TASK-..."}` -- перемещает в active |
+| `/board.json` | GET | нет | Полный board: inbox/active/done/ideas |
+
+Bearer token = SHA-256 от пароля. Хранится в клиентском JS.
+
+### Persistence (localStorage)
+
+При действии пользователя:
+1. API получает запрос, ставит в queue на Timeweb
+2. JS сохраняет действие в `localStorage.task_actions` (ключ: task_id, значение: action + timestamp)
+3. При загрузке board.json -- `applyActions()` фильтрует задачи по сохранённым действиям
+4. Действия автоочищаются через 24ч
+
+Решает проблему расхождения: board.json регенерируется каждые 15 мин из файлов на Sylvanas, localStorage хранит клиентское состояние между обновлениями.
+
+### Файловая структура задач (Sylvanas)
+
+```
+/home/openclaw/.openclaw/shared/tasks/
+  inbox/          -- новые задачи (task-inbox.sh)
+  active/         -- задачи в работе
+  done/           -- завершённые
+  ideas/          -- идеи (idea-capture.sh)
+  board.json      -- сгенерированный board
+```
+
+### Формат файла задачи
+
+```
+id: TASK-YYYYMMDDHHMMSS-RANDOM
+from: prince|silvana|thrall|arthas|kaelthas|illidan|self
+assignee: имя_агента
+status: new|in progress|pipeline|blocked|review|done
+stage: текст текущего этапа
+priority: normal|high|critical
+needs_chief: yes|no
+blocked_reason: текст (если needs_chief=yes)
+created: YYYY-MM-DD HH:MM UTC
+updated: YYYY-MM-DD HH:MM UTC
+---
+Заголовок задачи
+
+Описание и лог обновлений.
+```
+
+### Скрипты (Sylvanas)
+
+| Скрипт | Назначение |
+|--------|------------|
+| `task-inbox.sh "описание" assignee` | Создать задачу в inbox |
+| `task-update.sh TASK-ID field value` | Обновить поле задачи |
+| `task-complete.sh TASK-ID "результат"` | Завершить задачу (-> done/) |
+| `task-board.sh` / `task-board.py` | Генерация board.json |
+| `idea-capture.sh "описание"` | Создать идею |
+| `task-triage.sh` | Автотриаж inbox -> active |
+| `task-self-create.sh` | Self-задачи от агентов |
+| `dashboard-generator.sh` | HTML + board.json |
+| `update-dashboard.sh` | SCP board.json на Timeweb (cron */15) |
+
+### Pipeline обновления
+
+1. Агенты создают/обновляют задачи через скрипты на Sylvanas
+2. `task-board.py` генерирует `board.json` из файлов inbox/active/done/ideas
+3. `update-dashboard.sh` (cron */15) копирует на Timeweb через SCP
+4. Dashboard загружает board.json, применяет localStorage actions, рендерит
+5. Действия пользователя -> API queue + localStorage persistence
+
