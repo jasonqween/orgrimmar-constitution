@@ -187,18 +187,20 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 
 ## Распределение моделей по задачам (model routing)
 
-Стандарт для pipeline-воркеров. Источник: `skills/_base/PIPELINE-BASE.md`.
+> Полный модельный регламент, каталог моделей, fallback-цепочки и процедура смены модели -- в **CHARTER.md**, секция «Модельный регламент».
+
+Стандарт для pipeline-воркеров:
 
 | Задача | Модель | Алиас | Обоснование |
 |--------|--------|-------|-------------|
-| SPEC / PLANNING | Opus | `cc-opus` | Архитектурные решения |
-| GATHER / RESEARCH | Sonnet (OAuth $0) | `sonnet` | Быстро, 1M контекст, дёшево |
+| SPEC / PLANNING | Opus | `opus` | Архитектурные решения |
+| GATHER / RESEARCH | Grok 4.1 Fast | `grok` | Быстро, дёшево |
 | GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст, глубокий анализ |
-| Написание кода / FIX | Sonnet 4.6 | `claude` | Лучший кодер, подписка $0 |
-| VERIFY | Sonnet 4.6 | `claude` | Подписка $0 |
+| Написание кода / FIX | Codex (GPT-5.3) | `codex` | OAuth $0 |
+| VERIFY | Codex (GPT-5.3) | `codex` | OAuth $0 |
 | REVIEW (всегда) | Gemini 3.1 Pro | `gemini` | Обязателен в каждом review |
 | REVIEW (HIGH risk) | Codex + Gemini + Opus | все 3 | Triple review |
-| DIVERGE (brainstorm) | Codex + Gemini + Sonnet | все 3 | Разнообразие моделей |
+| DIVERGE (brainstorm) | Codex + Gemini + Grok | все 3 | Разнообразие моделей |
 
 **Принцип:** Gemini обязателен в каждом review. Triple review (3 модели) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
 
