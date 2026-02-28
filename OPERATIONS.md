@@ -403,7 +403,8 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 ### Правила cron
 
 - Все agentTurn cron = Grok 4.1 Fast (стандарт)
-- 0 Sonnet, 0 Opus в cron'ах (Opus/Codex только как spawned workers внутри задач)
+- 0 Sonnet в cron'ах. Opus/Codex -- только как spawned workers внутри задач
+- **Исключения** (документированные): Morning Briefing (Opus -- качество авторского текста), Constitution Audit (Grok -- стандарт). Новые исключения -- только через PR
 - systemEvent cron'ы = $0 (не тратят модель)
 - Правило молчания: если всё ОК -- не алертить принца
 - Алерт только при нарушении/аномалии
