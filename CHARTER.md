@@ -466,6 +466,135 @@ ssh root@<сервер> 'cp /home/openclaw/.openclaw/openclaw.json.bak.<дата
 - Размещение `apiKey` в `models.json` при наличии OAuth-профиля для провайдера
 - Fallback-цепочка из 1 модели (без fallback)
 
+
+#### 8. Стандарт конфигурации openclaw.json (обязателен на всех серверах)
+
+> **Источник проблемы (2026-02-28):** Аудит выявил 5 классов ошибок конфигурации,
+> не покрытых конституцией: инвертированный формат алиасов, отсутствие провайдеров
+> в `models.providers`, неавторизованные модели в каталоге OpenRouter, отсутствие
+> обязательных алиасов, несоответствие имён агентов.
+>
+> Следствие: `/model` в Telegram не показывал провайдер `anthropic`; агент на
+> сервере Illidan носил имя «Тралл» вместо «Иллидан».
+
+---
+
+##### 8.1 Имена агентов (обязательная таблица)
+
+Поле `name` в `agents.list[]` должно точно соответствовать:
+
+| Сервер   | `id`       | `name`      |
+|----------|-------------|-------------|
+| Sylvanas | `silvana`  | `Сильвана`  |
+| Sylvanas | `arthas`   | `Артас`     |
+| Sylvanas | `kaelthas` | `Кельтас`   |
+| Thrall   | `main`     | `Тралл`     |
+| Illidan  | `main`     | `Иллидан`   |
+
+Несоответствие = VIOLATION (Иллидан проверяет при еженедельном аудите).
+
+---
+
+##### 8.2 Формат алиасов (`agents.defaults.models`)
+
+**Правильный формат** — ключ = полный `provider/model-id`, значение = `{"alias": "short-name"}`:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "models": {
+        "anthropic/claude-opus-4-6":               {"alias": "opus"},
+        "openai-codex/gpt-5.3-codex":              {"alias": "codex"},
+        "openrouter/x-ai/grok-4.1-fast":           {"alias": "grok"},
+        "openrouter/google/gemini-3.1-pro-preview": {"alias": "gemini"},
+        "openrouter/google/gemini-3-flash-preview": {"alias": "gemini-flash"},
+        "openrouter/moonshotai/kimi-k2.5":          {"alias": "kimi"}
+      }
+    }
+  }
+}
+```
+
+**Запрещённый инвертированный формат** (ключ = короткое имя, значение = model-id):
+
+```json
+{
+  "agents": { "defaults": { "models": {
+    "opus": {"alias": "anthropic/claude-opus-4-6"}
+  }}}
+}
+```
+
+Последствия инвертированного формата:
+- OpenClaw нормализует ключ «opus» как `anthropic/opus` — несуществующая модель
+- Провайдер `anthropic` не появляется в `/model` пикере Telegram (auth не резолвится)
+- `openclaw models list` показывает `configured,missing` вместо `configured,alias:...`
+
+Все 6 алиасов обязательны на каждом сервере. Отсутствие любого = VIOLATION.
+
+---
+
+##### 8.3 Обязательная структура `models.providers`
+
+Три провайдера **обязательны** в `models.providers` на каждом сервере.
+
+```json
+{
+  "models": {
+    "providers": {
+      "anthropic": {
+        "baseUrl": "https://api.anthropic.com",
+        "models": [{
+          "id": "claude-opus-4-6", "name": "Claude Opus 4.6",
+          "input": ["text", "image"], "contextWindow": 200000, "maxTokens": 8192
+        }]
+      },
+      "openai-codex": {
+        "baseUrl": "https://api.openai.com/v1",
+        "models": [{
+          "id": "gpt-5.3-codex", "name": "GPT-5.3 Codex",
+          "input": ["text", "image"], "contextWindow": 200000, "maxTokens": 16384
+        }]
+      },
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "models": [
+          {"id": "x-ai/grok-4.1-fast",             "name": "Grok 4.1 Fast",  "input": ["text","image"], "contextWindow": 131072,  "maxTokens": 8192},
+          {"id": "moonshotai/kimi-k2.5",            "name": "Kimi K2.5",      "input": ["text","image"], "contextWindow": 131072,  "maxTokens": 8192},
+          {"id": "google/gemini-3-flash-preview",   "name": "Gemini 3 Flash", "input": ["text","image"], "contextWindow": 1000000, "maxTokens": 8192},
+          {"id": "google/gemini-3.1-pro-preview",   "name": "Gemini 3.1 Pro", "input": ["text","image"], "contextWindow": 1000000, "maxTokens": 8192}
+        ]
+      }
+    }
+  }
+}
+```
+
+Правила:
+- Отсутствие `anthropic` или `openai-codex` в `models.providers` = VIOLATION
+- Любая модель в `openrouter.models` за пределами списка выше = VIOLATION
+- `apiKey` в `models.providers` допустим только для openrouter; для anthropic и openai-codex -- через auth-profiles
+
+---
+
+##### 8.4 Чеклист аудита конфигурации openclaw.json (Иллидан, еженедельно)
+
+```
+[ ] agent.name совпадает с таблицей §8.1 на каждом сервере
+[ ] agents.defaults.models содержит ровно 6 записей в формате §8.2
+[ ] models.providers содержит anthropic, openai-codex, openrouter
+[ ] openrouter.models содержит ровно 4 модели (только из каталога §1)
+[ ] openclaw models list: все 6 моделей с тегом configured,alias:...
+[ ] /model пикер: видны все 3 провайдера (anthropic, openai-codex, openrouter)
+```
+
+Команда проверки на каждом сервере:
+
+```bash
+sudo -u openclaw openclaw models list
+```
+
 ---
 
 ### Бюджет API ($20/сутки)
