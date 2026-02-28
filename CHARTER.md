@@ -159,10 +159,18 @@ _Операционные правила. Обновляется по мере �
 | Написание кода | GPT-5.3 Codex | `codex` | OAuth |
 | Воркеры (research, review, сбор данных) | Grok 4.1 Fast | `grok` | OpenRouter |
 | Heartbeat | Grok 4.1 Fast | `grok` | OpenRouter |
+| **Triple Review (HIGH risk)** | **Codex + Gemini Pro + Opus** | `codex` + `gemini` + `opus` | OAuth + OR + OAuth |
 
 **Primary в конфиге:** `anthropic/claude-opus-4-6`
 **Fallback-цепочка:** Opus -> Codex -> Grok
 **Субагенты:** Grok (default), Codex (для кода)
+
+**Triple Review (обязательно для HIGH risk):**
+Triple Review запускается при: P0/P1 баги, security-правки, multi-server деплой, финансовый код, изменения конституции. Тралл спавнит 3 воркера параллельно:
+1. `sessions_spawn(model="codex", task="Review: ...")` -- Codex (код/логика)
+2. `sessions_spawn(model="gemini", task="Review: ...")` -- Gemini Pro (архитектура/контекст)
+3. `sessions_spawn(model="opus", task="Review: ...")` -- Opus (безопасность/критика)
+Результаты всех 3 собираются, конфликты резолвятся Траллом. Merge только если все 3 APPROVE.
 
 ##### Сильвана (coordinator, сервер Sylvanas)
 
