@@ -198,11 +198,11 @@ Switch-case по тегам. Неизвестная задача -> coordinator 
 | GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст, глубокий анализ |
 | Написание кода / FIX | Codex (GPT-5.3) | `codex` | OAuth $0 |
 | VERIFY | Codex (GPT-5.3) | `codex` | OAuth $0 |
-| REVIEW (всегда) | Gemini 3.1 Pro | `gemini` | Обязателен в каждом review |
-| REVIEW (HIGH risk) | Codex + Gemini + Opus | все 3 | Triple review |
+| REVIEW (обычный) | Codex + Opus | `codex` + `opus` | OAuth $0 + OAuth $0 |
+| REVIEW (HIGH risk) | Codex + Opus + Gemini | все 3 | Triple review |
 | DIVERGE (brainstorm) | Codex + Gemini + Grok | все 3 | Разнообразие моделей |
 
-**Принцип:** Gemini обязателен в каждом review. Triple review (3 модели) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
+**Принцип:** Обычный review = Codex + Opus (оба OAuth $0). Triple review (+ Gemini) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
 
 ---
 
