@@ -366,7 +366,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | Сильвана | 1h | Grok 4.1 Fast | -- |
 | Артас | 1h | Grok 4.1 Fast | -- |
 | Кельтас | 2h | Grok 4.1 Fast | -- |
-| Иллидан | 1h | Grok 4.1 Fast | -- |
+| Иллидан | 1h | Kimi K2.5 | -- |
 
 **Принцип:** heartbeat -- дешёвая модель (Grok 4.1 Fast через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
 
