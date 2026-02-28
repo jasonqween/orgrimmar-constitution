@@ -214,14 +214,14 @@ Triple Review запускается при: P0/P1 баги, security-правк
 
 | Задача | Модель | Алиас | Тип |
 |--------|--------|-------|-----|
-| Основная (review, мониторинг, анализ) | Gemini 3.1 Pro | `gemini` | OpenRouter |
+| Основная (review, мониторинг, анализ) | Kimi K2.5 | `kimi` | OpenRouter |
 | Code review L1+ | GPT-5.3 Codex | `codex` | OAuth |
-| Воркеры (research, сбор данных) | Grok 4.1 Fast | `grok` | OpenRouter |
-| Heartbeat | Grok 4.1 Fast | `grok` | OpenRouter |
+| Воркеры (research, сбор данных) | Kimi K2.5 | `kimi` | OpenRouter |
+| Heartbeat | Kimi K2.5 | `kimi` | OpenRouter |
 
-**Primary в конфиге:** `openrouter/google/gemini-3.1-pro-preview`
-**Fallback-цепочка:** Gemini Pro -> Grok -> Codex
-**Субагенты:** Grok (default)
+**Primary в конфиге:** `openrouter/moonshotai/kimi-k2.5`
+**Fallback-цепочка:** Kimi -> Codex
+**Субагенты:** Kimi (default)
 
 ---
 
@@ -261,7 +261,7 @@ Triple Review запускается при: P0/P1 баги, security-правк
 | Сильвана | Codex (OAuth) | Grok (OR) | -- |
 | Артас | Grok (OR) | Codex (OAuth) | -- |
 | Кель'тас | Opus (OAuth) | Codex (OAuth) | Grok (OR) |
-| Иллидан | Gemini Pro (OR) | Grok (OR) | Codex (OAuth) |
+| Иллидан | Kimi K2.5 (OR) | Codex (OAuth) | -- |
 
 ---
 
