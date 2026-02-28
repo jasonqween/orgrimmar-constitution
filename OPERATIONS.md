@@ -362,13 +362,13 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 | Агент | Частота | Модель | Активные часы |
 |-------|---------|--------|---------------|
-| Тралл | 2h | Kimi K2.5 | 06:00-23:00 MSK |
-| Сильвана | 1h | Kimi K2.5 | -- |
-| Артас | 1h | Kimi K2.5 | -- |
-| Кельтас | 2h | Kimi K2.5 | -- |
-| Иллидан | 1h | Kimi K2.5 | -- |
+| Тралл | 2h | Grok 4.1 Fast | 06:00-23:00 MSK |
+| Сильвана | 1h | Grok 4.1 Fast | -- |
+| Артас | 1h | Grok 4.1 Fast | -- |
+| Кельтас | 2h | Grok 4.1 Fast | -- |
+| Иллидан | 1h | Grok 4.1 Fast | -- |
 
-**Принцип:** heartbeat -- дешёвая модель (Kimi K2.5 через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
+**Принцип:** heartbeat -- дешёвая модель (Grok 4.1 Fast через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
 
 ---
 
