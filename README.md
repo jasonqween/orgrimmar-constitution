@@ -52,3 +52,4 @@ Read-only свод правил, который агенты обязаны со
 # access test 2
 \n<\!-- test: private repo PR check 2026-03-01 -->
 \n<\!-- test: branch protection check 2026-03-01 -->
+\n<\!-- test: public repo check 2026-03-01 -->
