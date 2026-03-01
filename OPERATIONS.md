@@ -98,8 +98,10 @@ new -> in progress -> [pipeline] -> review -> done
 | 3 | `memory-tiering` | Управление памятью (HOT/WARM/COLD) | -- |
 | 4 | `transcript` | Транскрипция YouTube | -- |
 | 5 | `socialdata-twitter` | Чтение Twitter/X и статей | -- |
-| 6 | `gog` | Google Calendar | -- |
+| 6 | `gog` | Google Workspace | только Sylvanas (Сильвана, Артас, Кельтас) |
 | 7 | Groq Whisper | Транскрипция голосовых (конфиг speech.provider) | -- |
+
+**Правило OAuth-скиллов:** скиллы с OAuth-авторизацией (`gog` и подобные) ставятся только на ОДИН сервер, чтобы избежать конфликта refresh-токенов при использовании одного аккаунта. GOG = Sylvanas.
 
 **Дополнительно:** `orgrimmar-introspection` обязателен для координаторов (Сильвана, Тралл, Иллидан).
 
