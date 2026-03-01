@@ -393,6 +393,107 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 ---
 
+## Инварианты памяти (НЕЛЬЗЯ НАРУШАТЬ)
+
+> **Это не рекомендации. Нарушение любого пункта = память перестаёт работать.**
+> Категория: **P0**. Иллидан проверяет при каждом аудите. Нарушение → немедленный алерт принцу.
+
+### Защищённые кроны (PROTECTED CRONS)
+
+Следующие кроны **запрещено удалять** без замены на эквивалент. Перед любым изменением crontab — убедись, что ни один из них не затронут.
+
+#### Sylvanas (crontab openclaw)
+
+| ID | Расписание | Скрипт | Что сломается при удалении |
+|----|-----------|--------|---------------------------|
+| **SYL-C1** | `0 21 * * *` | `memory-rotate.sh` (Сильвана) | Файлы памяти вырастут >10KB → flush заблокирован → Сильвана не сохраняет контекст |
+| **SYL-C2** | `0 21 * * *` | `memory-rotate.sh` (Артас) | То же — Артас |
+| **SYL-C3** | `0 21 * * *` | `memory-rotate.sh` (Кельтас) | То же — Кельтас |
+| **SYL-C4** | `0 */6 * * *` | `constitution-sync.sh` | `_shared/CONVENTIONS.md` устаревает → агенты работают по старым правилам |
+| **SYL-C5** | `0 */6 * * *` | `learnings-merge.py` | `shared/LEARNINGS.md` не обновляется → уроки агентов не попадают в общую память |
+
+#### Thrall (crontab openclaw)
+
+| ID | Расписание | Скрипт | Что сломается при удалении |
+|----|-----------|--------|---------------------------|
+| **THR-C1** | `0 * * * *` | `obsidian-sync.sh` | `agent-memory/shared/` устаревает → все агенты теряют shared-контекст через QMD |
+| **THR-C2** | `0 */6 * * *` | `constitution-sync.sh` | Тралл работает по старой конституции |
+| **THR-C3** | `0 21 * * *` | `memory-rotate.sh` | Тралл не ротирует память → flush заблокирован |
+
+#### Illidan (crontab openclaw)
+
+| ID | Расписание | Скрипт | Что сломается при удалении |
+|----|-----------|--------|---------------------------|
+| **ILL-C1** | `0 */6 * * *` | `constitution-sync.sh` | Иллидан работает по старой конституции |
+| **ILL-C2** | `0 21 * * *` | `memory-rotate.sh` | Иллидан не ротирует память → flush заблокирован |
+
+### Защищённые конфиги (PROTECTED CONFIG)
+
+Следующие параметры в `openclaw.json` **запрещено изменять** без понимания последствий:
+
+| ID | Параметр | Обязательное значение | Что сломается при нарушении |
+|----|---------|----------------------|----------------------------|
+| **CFG-1** | `memory.qmd.update.embedInterval` | `"30m"` (не `"0"`, не пусто) | QMD не строит эмбеддинги → семантический поиск мёртв |
+| **CFG-2** | `agents.defaults.compaction.memoryFlush.softThresholdTokens` | `30000` | Compaction не срабатывает → память не сбрасывается никогда |
+| **CFG-3** | `agents.defaults.compaction.memoryFlush.enabled` | `true` | Flush отключён → агент не сохраняет ничего между сессиями |
+| **CFG-4** | Коллекция `shared-main` в `agents/<id>/qmd/index.yml` | присутствует на всех агентах | Агент не видит shared-память через QMD |
+
+### Защищённые скиллы (PROTECTED SKILLS)
+
+| ID | Скилл | Где установлен | Что сломается при удалении |
+|----|-------|---------------|---------------------------|
+| **SKL-1** | `memory-audit` | все серверы, все агенты | Нет самодиагностики → нарушения памяти не обнаруживаются |
+| **SKL-2** | `learnings` | все серверы, все агенты | Агент не пишет уроки в LEARNINGS.md |
+
+### Протокол перед изменением crontab
+
+**Обязателен при любом редактировании `crontab -e` или `crontab -u openclaw -l`:**
+
+```bash
+# 1. Сохрани текущий crontab перед изменением
+crontab -u openclaw -l > /tmp/crontab.backup.$(date +%Y%m%d_%H%M%S)
+
+# 2. После изменения — верифицируй, что защищённые кроны на месте
+crontab -u openclaw -l | grep -E "memory-rotate|constitution-sync|learnings-merge|obsidian-sync"
+
+# 3. Если кто-то из них пропал — СТОП, восстанови из бэкапа:
+# crontab -u openclaw /tmp/crontab.backup.<timestamp>
+```
+
+**Нарушение:** если Иллидан при аудите обнаружит отсутствие хотя бы одного защищённого крона — это **P0**, немедленный алерт принцу.
+
+### Быстрая верификация инвариантов
+
+Запусти на любом сервере для проверки своих инвариантов:
+
+```bash
+#!/bin/bash
+# Запусти или скажи агенту "memory-audit" для полного отчёта
+echo "=== Инварианты памяти ==="
+CRON=$(crontab -u openclaw -l 2>/dev/null)
+SERVER=$(hostname)
+
+# Кроны
+check() { echo "$CRON" | grep -q "$2" && echo "✅ $1" || echo "❌ НАРУШЕН: $1 ($2)"; }
+check "memory-rotate"     "memory-rotate"
+check "constitution-sync" "constitution-sync"
+[ "$(echo $SERVER | grep -i thrall)" ] && check "obsidian-sync" "obsidian-sync"
+[ "$(echo $SERVER | grep -i sylvanas)" ] && check "learnings-merge" "learnings-merge"
+
+# Config
+python3 -c "
+import json
+d = json.load(open('/home/openclaw/.openclaw/openclaw.json'))
+ei = d.get('memory',{}).get('qmd',{}).get('update',{}).get('embedInterval','')
+ok = ei not in ['0','0s','']
+print('✅ embedInterval: ' + ei if ok else '❌ НАРУШЕН: embedInterval=' + ei)
+thr = d.get('agents',{}).get('defaults',{}).get('compaction',{}).get('memoryFlush',{}).get('softThresholdTokens',0)
+print('✅ softThresholdTokens: ' + str(thr) if thr==30000 else '❌ НАРУШЕН: softThresholdTokens=' + str(thr))
+"
+```
+
+---
+
 ## Cron jobs (реестр)
 
 Полный реестр cron jobs: `shared/cron-registry.md` (не дублируется в конституции).
@@ -710,6 +811,9 @@ collections:
 - Игнорировать проверку размера перед записью (flush)
 - Писать в `agent-memory/shared/` напрямую (только через obsidian-sync)
 - Писать в `shared/LEARNINGS.md` напрямую (только через learnings-merge.py)
+- **Удалять защищённые кроны** (SYL-C1..C5, THR-C1..C3, ILL-C1..C2) без замены — см. раздел «Инварианты памяти»
+- **Менять `embedInterval` на `"0"`** — QMD перестаёт строить эмбеддинги
+- **Удалять коллекцию `shared-main`** из QMD index.yml любого агента
 
 ### Исключение: Кельтас (контент-продюсер, Second Brain)
 
