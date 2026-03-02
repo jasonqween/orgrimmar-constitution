@@ -195,7 +195,7 @@ Triple Review запускается при: P0/P1 баги, security-правк
 
 **Primary в конфиге:** `openrouter/x-ai/grok-4.1-fast`
 **Fallback-цепочка:** Grok -> Kimi
-**Субагенты:** Grok (default)
+**Субагенты:** Grok 4.1 Fast `openrouter/x-ai/grok-4.1-fast` (default)
 **Heartbeat:** OFF (`every: 0`)
 
 ##### Кель'тас (creator, сервер Sylvanas)
