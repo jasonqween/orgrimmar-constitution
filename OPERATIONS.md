@@ -421,7 +421,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | **THR-C2** | `0 */6 * * *` | `constitution-sync.sh` | Тралл работает по старой конституции |
 | **THR-C3** | `0 21 * * *` | `memory-rotate.sh` | Тралл не ротирует память → flush заблокирован |
 | **THR-C4** | `30 3 * * *` | `backup-daily.sh` | Нет бэкапов → потеря данных при сбое |
-| **THR-C5** | `0 4 * * *` | `cleanup-tmp.sh` | /tmp забивается → диск переполняется (2GB RAM сервер) |
+| **THR-C5** | `0 4 * * *` | `cleanup-tmp.sh` | /tmp забивается → диск переполняется |
 
 #### Illidan (crontab openclaw)
 
