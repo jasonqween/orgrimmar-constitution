@@ -167,6 +167,7 @@ L3-агенты читают ВСЁ (включая MISSION.md и CONVENTIONS.md
 - Конституцию мержит ТОЛЬКО принц
 
 **Взаимная страховка (failover):**
-- Sylvanas упал → devops (primary), coder (backup)
+- Arthas VPS упал → devops (primary), coder (backup)
+- Mac mini упал → coder (primary), devops (backup)
 - Thrall упал → devops
 - Illidan упал → coder (единственный)
