@@ -859,8 +859,7 @@ workspace/<agent>/
     │   └── HOT_MEMORY.md        Now / Next / Blockers. Только активное.
     ├── warm/
     │   ├── WARM_MEMORY.md       Операционная база: серверы, пути, инструменты
-    │   ├── WATCHLIST.md         Личные наблюдения агента во время работы
-    │   └── LEARNINGS.md         Уроки из ошибок
+    │   └── WATCHLIST.md         Личные наблюдения агента во время работы
     ├── YYYY-MM-DD.md            Дневник сессии, 3-5 строк за flush
     └── archive/                 Ротированные файлы
 ```
@@ -883,7 +882,9 @@ workspace/<agent>/
 - Формат: название / тезис / статус (наблюдаем / отложено / адаптировано / отклонено)
 - Если наблюдение стало проектной идеей -- перенести в `shared/tasks/ideas/` + удалить из WATCHLIST
 
-**LEARNINGS -- уроки из ошибок:**
+**LEARNINGS -- уроки из ошибок (Firebase):**
+- Записывать через `orgbus push learnings '{...}'` -- напрямую в Firebase
+- Listener skill зеркалирует в `agent-memory/firebase/learnings.md` для QMD
 - Записывать ТОЛЬКО когда: вождь поправил, ошибка дорогая, паттерн повторяется
 - Качество > количество. Не дублировать.
 - **Формат урока (10 полей):**
@@ -927,22 +928,35 @@ workspace/<agent>/
 2. Если файл >10KB -- пропустить, НЕ писать
 3. HOT -- перезаписать полностью (только активные задачи)
 4. COLD -- дописать ТОЛЬКО если есть новое архитектурное решение
-5. LEARNINGS -- дописать ТОЛЬКО если есть новый урок
-6. Дневник -- 3-5 строк summary, не повторять прошлые записи
-7. Если нечего сохранять -- ответить `NO_FLUSH`
+5. Дневник -- 3-5 строк summary, не повторять прошлые записи
+6. **НЕ трогать** `agent-memory/firebase/*.md` -- listener skill обновляет сам
+7. Learnings -- писать в Firebase через `orgbus push learnings`, НЕ в локальный файл
+8. Если нечего сохранять -- ответить `NO_FLUSH`
+
+#### Boot (старт сессии)
+
+При старте сессии в контекст загружаются **только 3 файла (~8 KB)**:
+
+| Файл | Размер | Содержание |
+|------|--------|-----------|
+| SOUL.md | ~3.5 KB | Идентичность агента (неизменна) |
+| HOT_MEMORY.md | ~1 KB | Активное состояние (NOW / NEXT / BLOCKERS) |
+| WARM_MEMORY.md | ~3.5 KB | Операционная база (серверы, пути, инструменты) |
+
+Всё остальное (LEARNINGS, CONVENTIONS, ROSTER, USER, stance, tone, Firebase данные) -- **QMD подмешивает автоматически** при релевантном запросе. Не грузить при boot.
 
 #### Защита от перегрузки контекста
 
 - `contextPruning: cache-ttl, ttl: 6h` -- сообщения старше 6ч автоматически удаляются
 - `keepLastAssistants: 3` -- всегда видит 3 последних своих ответа
 - QMD при каждом запросе подмешивает max 6 релевантных чанков (не весь файл целиком)
-- При старте сессии загружаются только: SOUL + MEMORY + HOT + WARM (не весь workspace)
+- Boot = 8 KB. Остальное -- on-demand через QMD
 
 #### Ротация (автоматическая, ежедневно)
 
 Скрипт: `scripts/memory-rotate.sh` на каждом сервере.
 
-1. COLD / WARM / LEARNINGS >8KB → последние 50 строк остаются, старое в `archive/`
+1. COLD / WARM >8KB → последние 50 строк остаются, старое в `archive/`
 2. Дневники старше 3 дней → целиком в `archive/`
 3. Cron: `0 21 * * *` (00:00 MSK)
 
@@ -984,22 +998,58 @@ agent-memory/shared/
 └── IDEAS.md                           агрегация из tasks/ideas/ (плоский список)
 ```
 
-#### Firebase как source of truth (миграция)
+#### Firebase как source of truth
 
-Shared-слой теперь также зеркалируется в Firebase RTDB. Firebase = source of truth для:
+Firebase RTDB = единственный source of truth для shared данных:
 - **tasks** -- `/tasks/` (замена `shared/tasks/`)
 - **events** -- `/events/` (append-only лог)
-- **learnings** -- `/learnings/` (замена `shared/LEARNINGS.md`)
+- **learnings** -- `/learnings/` (замена `shared/LEARNINGS.md` и `memory/warm/LEARNINGS.md`)
 - **agents status** -- `/agents/` (статусы, heartbeat)
+- **content** -- `/content/` (идеи, источники, черновики, библиотека)
+- **bulletin** -- `/bulletin/` (доска объявлений)
 
-Файловый `shared/` на Mac mini -- постепенно deprecated. Чтение из Firebase через `orgbus get`, запись через `orgbus push/put`.
+Файловый `shared/` на Mac mini -- **deprecated**. Новые данные пишутся только в Firebase через `orgbus push/patch`.
+
+#### Realtime sync: Firebase --> .md --> QMD (Listener Skill)
+
+Данные из Firebase зеркалируются в локальные .md файлы через **SSE (Server-Sent Events)** -- realtime push без cron/polling. Listener skill на каждом сервере:
+
+1. Держит SSE-подключения к Firebase
+2. При изменении -- обновляет .md файл
+3. Вызывает `qmd update` (BM25 переиндексация, ~1s)
+4. Каждые 5 мин / 5 events -- `qmd embed` (vector, ~5-10s)
+
+```
+Firebase RTDB --> SSE --> Listener skill --> agent-memory/firebase/*.md --> QMD
+```
+
+| SSE Stream | Firebase path | .md файл | Формат |
+|-----------|---------------|----------|--------|
+| 1 | `/tasks/` | `tasks-mine.md` | Компактный (title + status + assignee) |
+| 2 | `/bulletin/` | `bulletin.md` | Полный |
+| 3 | `/learnings/` | `learnings.md` | Полный (последние 20, context + wrong + correct + rule) |
+| 4 | `/content/ideas/` | `content-ideas.md` | Средний (title + concept + status) |
+| 5 | `/agents/` | `agents-status.md` | Компактный (имя + статус + last seen) |
+
+**Результат:** QMD ищет по ВСЕМ данным (личная память + Firebase зеркала) через единый поисковый слой. Задержка от записи в Firebase до видимости в QMD -- **2-3 секунды**.
+
+**При потере SSE-соединения:** reconnect с exponential backoff. .md файлы остаются (stale но рабочие). Агент работает на cached данных.
+
+#### Learnings -- единый путь
+
+```
+Агент -> orgbus push learnings '{...}' -> Firebase /learnings/
+    -> SSE -> Listener -> learnings.md -> QMD
+```
+
+**Deprecated:** `learnings-merge.py`, `shared/LEARNINGS.md`, локальный `memory/warm/LEARNINGS.md`. Одна копия -- Firebase. Одно зеркало -- .md для QMD.
 
 #### Правила shared памяти
 
-- `workspace/_shared/` -- единственный источник правды для ручных файлов
+- `workspace/_shared/` -- источник правды для ручных файлов (USER.md, ROSTER.md и др.)
 - Агенты НЕ пишут напрямую в `_shared/` -- только через скрипты или вождь вручную
-- `agent-memory/shared/` -- read-only, не редактировать
-- `shared/LEARNINGS.md` -- только через `learnings-merge.py`, не вручную
+- `agent-memory/firebase/` -- read-only, обновляется listener skill'ом
+- Запись shared данных -- ТОЛЬКО через `orgbus push/patch` в Firebase
 
 ---
 
@@ -1025,22 +1075,24 @@ collections:
   memory-root:       workspace/<agent>/MEMORY.md
   memory-dir:        workspace/<agent>/memory/**/*.md
   shared:            agent-memory/shared/**/*.md
+  firebase:          agent-memory/firebase/**/*.md
   sessions:          agents/<id>/qmd/sessions/**/*.md
 ```
 
-**Обязательно:** коллекция `shared` должна быть на всех серверах -- агент должен искать и в личной, и в общей памяти.
+**Обязательно:** коллекции `shared` и `firebase` должны быть на всех серверах -- QMD = единый поисковый слой по личной памяти, shared файлам и Firebase зеркалам.
 
 #### Параметры
 
 | Параметр | Значение |
 |----------|----------|
-| Backend | BM25 + Gemini embeddings (`gemini-embedding-001`) |
-| Поиск | hybrid: vector 0.7 + BM25 0.3 |
-| Обновление файлов | каждые 5 минут |
-| Обновление эмбеддингов | каждые 30 минут |
+| Backend | BM25 + Vector + LLM reranking (локальные GGUF модели) |
+| Модели | gemma-300M (embeddings), qwen3-reranker-0.6B, qmd-query-expansion-1.7B |
+| Поиск | hybrid: Reciprocal Rank Fusion (BM25 + vector + reranking) |
+| Chunking | 900 токенов, 15% overlap |
+| Обновление FTS | listener skill вызывает `qmd update` при каждом SSE event (~1s) |
+| Обновление embeddings | listener skill вызывает `qmd embed` каждые 5 мин / 5 events (~5-10s) |
 | Max результатов при запросе | 6 чанков |
 | Session memory | 30 дней |
-| Провайдер | `GEMINI_API_KEY` в env агента |
 
 ---
 
@@ -1068,7 +1120,7 @@ collections:
 |-----------|--------|-----------|
 | `0 21 * * *` | `memory-rotate.sh` ×3 | ротация Сильваны, Артаса |
 | `0 */6 * * *` | `constitution-sync.sh` | git pull конституции → обновляет `_shared/CONVENTIONS.md` |
-| `0 */6 * * *` | `learnings-merge.py` | merge LEARNINGS всех агентов → `shared/LEARNINGS.md` |
+| `0 */6 * * *` | ~~`learnings-merge.py`~~ | **DEPRECATED**: заменён Firebase + Listener skill |
 
 #### Thrall
 
@@ -1092,14 +1144,26 @@ collections:
 
 **Скилл:** `shared-memory` (файл: `skills/shared-memory/SKILL.md`)
 
-Обязателен для всех агентов. Читает shared-слой при старте сессии:
-USER.md, USER_COGNITIVE_PROFILE.md, ROSTER.md, CONVENTIONS.md, COSTS.md, CHATS.md, IDEAS.md, LEARNINGS.md.
+Обязателен для всех агентов. При старте загружает только boot-файлы (SOUL + HOT + WARM = 8 KB). Shared данные (USER.md, ROSTER.md, CONVENTIONS.md, LEARNINGS и др.) подгружаются автоматически через QMD при релевантном запросе.
 
-| Триггер | Кто | Когда |
-|---------|-----|-------|
-| Старт сессии | все агенты | всегда |
-| Задача касается другого агента/сервера | все агенты | перед задачей |
-| Вопрос о принце, команде, стоимости | все агенты | по запросу |
+| Триггер | Что происходит |
+|---------|---------------|
+| Старт сессии | Boot: SOUL + HOT + WARM (~8 KB) |
+| Любой запрос | QMD подмешивает релевантные чанки из всех collections (личное + shared + firebase) |
+| Нужны детали по ID | `orgbus get {path}/{id}` -- точечный запрос в Firebase |
+
+### Firebase Listener (firebase-listener)
+
+**Скилл:** `firebase-listener` (файл: `skills/firebase-listener/SKILL.md`)
+
+Обязателен для всех серверов. SSE-подключение к Firebase RTDB, realtime sync в .md файлы.
+
+| Что делает | Как |
+|-----------|-----|
+| Слушает Firebase через SSE | `curl -N -H "Accept: text/event-stream"` |
+| Обновляет .md при изменении | Инкрементальная запись в `agent-memory/firebase/` |
+| Обновляет QMD индекс | `qmd update` на каждый event, `qmd embed` каждые 5 мин |
+| Reconnect при обрыве | Exponential backoff, cached .md остаются |
 
 ### Самоаудит памяти (memory-audit)
 
