@@ -176,3 +176,4 @@ L3-агенты читают ВСЁ (включая MISSION.md и CONVENTIONS.md
 - Mac mini упал → coder (primary), devops (backup)
 - Thrall упал → devops
 - Illidan упал → coder (единственный)
+
