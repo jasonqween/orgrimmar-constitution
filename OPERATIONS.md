@@ -474,18 +474,18 @@ Illidan VPS: sa-illidan
 
 Стандарт для pipeline-воркеров:
 
-| Задача | Модель | Алиас | Обоснование |
-|--------|--------|-------|-------------|
-| SPEC / PLANNING | Opus | `opus` | Архитектурные решения |
-| GATHER / RESEARCH | Grok 4.1 Fast | `grok` | Быстро, дёшево |
-| GATHER (>50KB) | Gemini 3.1 Pro | `gemini` | 2M контекст, глубокий анализ |
-| Написание кода / FIX | Codex (GPT-5.3) | `codex` | OAuth $0 |
-| VERIFY | Codex (GPT-5.3) | `codex` | OAuth $0 |
-| REVIEW (обычный) | Codex + Opus | `codex` + `opus` | OAuth $0 + OAuth $0 |
-| REVIEW (HIGH risk) | Codex + Opus + Gemini | все 3 | Triple review |
-| DIVERGE (brainstorm) | Codex + Gemini + Grok | все 3 | Разнообразие моделей |
+| Задача | Модель | Обоснование |
+|--------|--------|-------------|
+| SPEC / PLANNING | `opus` | Архитектурные решения |
+| GATHER / RESEARCH | `grok` | Быстро, дёшево |
+| GATHER (>50KB) | `gemini` | 2M контекст, глубокий анализ |
+| Написание кода / FIX | `codex` | OAuth $0 |
+| VERIFY | `codex` | OAuth $0 |
+| REVIEW (обычный) | `codex` + `opus` | OAuth $0 + OAuth $0 |
+| REVIEW (HIGH risk) | `codex` + `opus` + `gemini` | Triple review |
+| DIVERGE (brainstorm) | `codex` + `gemini` + `grok` | Разнообразие моделей |
 
-**Принцип:** Обычный review = Codex + Opus (оба OAuth $0). Triple review (+ Gemini) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
+**Принцип:** Обычный review = `codex` + `opus` (оба OAuth $0). Triple review (+ `gemini`) -- только для HIGH risk (P0/P1 баги, security, multi-server деплой, финансовый код).
 
 ---
 
@@ -666,14 +666,14 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 | Агент | Частота | Модель | Активные часы | Вызовов/день |
 |-------|---------|--------|---------------|-------------|
-| Тралл | 3h | Grok 4.1 Fast | 06:00-23:00 MSK | ~6 |
-| Сильвана | 2h | Grok 4.1 Fast | 24/7 | ~12 |
+| Тралл | 3h | `grok` | 06:00-23:00 MSK | ~6 |
+| Сильвана | 2h | `grok` | 24/7 | ~12 |
 | Артас | OFF | -- | -- | 0 |
-| Иллидан | 2h | Kimi K2.5 | 24/7 | ~12 |
+| Иллидан | 2h | `kimi` | 24/7 | ~12 |
 
 **Итого:** ~30 вызовов/день, ~$0.25/день.
 
-**Принцип:** heartbeat -- дешёвая модель (Grok 4.1 Fast через OpenRouter). Не использовать Opus/Codex/Gemini для heartbeat.
+**Принцип:** heartbeat -- дешёвая модель (`grok` через OpenRouter). Не использовать `opus`/`codex`/`gemini` для heartbeat.
 Артас отключён (нет активных задач). Включается по необходимости.
 
 ---
@@ -854,10 +854,10 @@ print('✅ compaction.mode: ' + mode if mode=='safeguard' else '❌ НАРУШЕ
 
 | Сервер | OpenClaw cron | System cron | Heartbeat |
 |--------|--------------|-------------|-----------|
-| Thrall | 1 | 5 | 3h Grok |
-| Mac mini | 0 | 8 | 2h Grok (Silvana) |
-| Arthas VPS | 0 | 1 | 2h Grok (Артас) |
-| Illidan | 0 | 3 | 2h Kimi |
+| Thrall | 1 | 5 | 3h `grok` |
+| Mac mini | 0 | 8 | 2h `grok` (Silvana) |
+| Arthas VPS | 0 | 1 | 2h `grok` (Артас) |
+| Illidan | 0 | 3 | 2h `kimi` |
 
 ### Firebase cron jobs
 
@@ -871,9 +871,9 @@ print('✅ compaction.mode: ' + mode if mode=='safeguard' else '❌ НАРУШЕ
 
 ### Правила cron
 
-- Все agentTurn cron = Grok 4.1 Fast (стандарт)
-- 0 Sonnet в cron'ах. Opus/Codex -- только как spawned workers внутри задач
-- **Исключения** (документированные): Morning Briefing (Opus -- качество авторского текста). Новые исключения -- только через PR
+- Все agentTurn cron = `grok` (стандарт)
+- 0 `sonnet` в cron'ах. `opus`/`codex` -- только как spawned workers внутри задач
+- **Исключения** (документированные): Morning Briefing (`opus` -- качество авторского текста). Новые исключения -- только через PR
 - systemEvent cron'ы = $0 (не тратят модель)
 - Правило молчания: если всё ОК -- не алертить принца
 - Алерт только при нарушении/аномалии
@@ -882,7 +882,7 @@ print('✅ compaction.mode: ' + mode if mode=='safeguard' else '❌ НАРУШЕ
 
 ## Аудит конституции (по запросу)
 
-Аудит соответствия системы конституции выполняется по запросу вождя (Тралл запускает cross-review с Grok-воркерами).
+Аудит соответствия системы конституции выполняется по запросу вождя (Тралл запускает cross-review с `grok`-воркерами).
 
 ### 8 категорий аудита
 
@@ -971,8 +971,8 @@ workspace/<agent>/
 
 | Параметр | Значение |
 |----------|----------|
-| Порог memory flush | contextWindow − reserveTokensFloor − softThresholdTokens (Opus: ~176k) |
-| Порог auto-compaction | contextWindow − reserveTokensFloor (Opus: ~180k) |
+| Порог memory flush | contextWindow − reserveTokensFloor − softThresholdTokens (`opus`: ~176k) |
+| Порог auto-compaction | contextWindow − reserveTokensFloor (`opus`: ~180k) |
 | Макс. размер файла для flush | 10 KB |
 | Порог ротации | 8 KB |
 | Хранение дневников | 3 дня, затем → archive/ |
@@ -985,9 +985,9 @@ workspace/<agent>/
 Memory flush = contextWindow - reserveTokensFloor - softThresholdTokens
 Auto-compaction = contextWindow - reserveTokensFloor
 
-Opus (200k): flush при ~176k, compaction при ~180k
-Codex (200k): flush при ~176k, compaction при ~180k
-Grok (131k): flush при ~107k, compaction при ~111k
+opus (200k): flush при ~176k, compaction при ~180k
+codex (200k): flush при ~176k, compaction при ~180k
+grok (131k): flush при ~107k, compaction при ~111k
 ```
 
 При достижении порога flush OpenClaw вызывает memoryFlush:
@@ -1306,9 +1306,9 @@ collections:
 
 | Поток | Расписание | Сервер | Модель | Владелец |
 |-------|-----------|--------|--------|----------|
-| Morning Briefing | 07:00 UTC daily | Thrall | Opus (fallback Codex) | Тралл |
+| Morning Briefing | 07:00 UTC daily | Thrall | `opus` (fallback `codex`) | Тралл |
 | Blocked Tasks | */15 cron bash | Mac mini | -- (без AI) | Сильвана |
-| Ideas Digest | 09:00 UTC (12:00 MSK) Вт,Пт | Thrall | Grok | Тралл |
+| Ideas Digest | 09:00 UTC (12:00 MSK) Вт,Пт | Thrall | `grok` | Тралл |
 | Health Alert | по событию | Arthas VPS | Артас heartbeat | Артас |
 | Personal Reminders | по запросу вождя | Arthas VPS | Артас | Артас (DM) |
 
@@ -1326,7 +1326,7 @@ collections:
 1. **Сбор** (bash): `scripts/collect-ai-news.sh` парсит все источники за последние 24ч
    - Telegram: `curl t.me/s/{channel}`, `data-post` ID -> прямые ссылки `t.me/channel/post_id`
    - Twitter: SocialData API (`$SOCIALDATA_API_KEY`), User-Agent обязателен
-2. **Анализ + текст** (Opus): ТОП 3-5 новостей AI + саммари каналов, авторский пост
+2. **Анализ + текст** (`opus`): ТОП 3-5 новостей AI + саммари каналов, авторский пост
 3. **Отправка** (bash): `scripts/send-to-channel.sh` -- Telegram Bot API, `link_preview_options.is_disabled: true`
 
 #### Fallback при сбое сбора
