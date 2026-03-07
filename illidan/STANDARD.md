@@ -22,13 +22,13 @@ _Полное описание архитектуры, конфигурации 
 
 | Параметр | Модель | Алиас | Обоснование |
 |----------|--------|-------|-------------|
-| **Primary** | Kimi K2.5 | `kimi` | Дешёвая, быстрая. Heartbeat, мониторинг, парсинг логов, cron-проверки (~70% задач) |
-| **Fallback 1** | Grok 4.1 Fast | `grok` | Запасная если Kimi недоступен |
-| **Fallback 2** | GPT-5.3 Codex | `codex` | Code review (OAuth $0) |
-| **Heartbeat** | Kimi K2.5 | `kimi` | Всегда дешёвая модель, никогда Opus/Codex |
-| **Subagents** | Grok 4.1 Fast | `grok` | Воркеры для параллельных задач |
-| **P0 incidents** | Claude Opus 4.6 | `opus` | Только при: production down, необратимое действие, запрос принца (~5% задач) |
-| **Сложный RCA** | Gemini 3.1 Pro | `gemini` | Контекст >50K, multi-server инциденты (~25% задач) |
+| **Primary** | Kimi (Moonshot) | `kimi` | Дешёвая, быстрая. Heartbeat, мониторинг, парсинг логов, cron-проверки (~70% задач) |
+| **Fallback 1** | Grok (xAI) | `grok` | Запасная если Kimi недоступен |
+| **Fallback 2** | Codex (OpenAI) | `codex` | Code review (OAuth $0) |
+| **Heartbeat** | Kimi (Moonshot) | `kimi` | Всегда дешёвая модель, никогда Opus/Codex |
+| **Subagents** | Grok (xAI) | `grok` | Воркеры для параллельных задач |
+| **P0 incidents** | Opus (Anthropic) | `opus` | Только при: production down, необратимое действие, запрос принца (~5% задач) |
+| **Сложный RCA** | Gemini (Google) | `gemini` | Контекст >50K, multi-server инциденты (~25% задач) |
 
 **Fallback-цепочка:** Kimi → Grok → Codex
 
@@ -43,7 +43,7 @@ _Полное описание архитектуры, конфигурации 
 | Параметр | Значение |
 |----------|----------|
 | **Интервал** | Каждые 2 часа |
-| **Модель** | Kimi K2.5 |
+| **Модель** | `kimi` |
 | **Активные часы** | 24/7 |
 | **Вызовов/день** | ~12 |
 | **Стоимость** | ~$0.01/день |
@@ -139,7 +139,7 @@ ssh -o ConnectTimeout=5 root@<ARTHAS_TS_IP> "bash /home/openclaw/.openclaw/scrip
 | Параметр | Значение |
 |----------|----------|
 | **Расписание** | `0 3 * * *` (03:00 UTC, раз в день) |
-| **Модель** | default (Kimi K2.5) |
+| **Модель** | default (`kimi`) |
 | **Delivery** | announce |
 | **Что делает** | Проверяет существование и свежесть restic-бэкапов (<25ч) на всех 3 серверах |
 | **Зачем** | Страховка: backup-daily мог упасть молча, verify это ловит. По конституции бэкапы не старше 25ч -- этот cron это контролирует |
@@ -149,7 +149,7 @@ ssh -o ConnectTimeout=5 root@<ARTHAS_TS_IP> "bash /home/openclaw/.openclaw/scrip
 | Параметр | Значение |
 |----------|----------|
 | **Расписание** | `0 5 * * *` (05:00 UTC, раз в день) |
-| **Модель** | default (Kimi K2.5) |
+| **Модель** | default (`kimi`) |
 | **Delivery** | announce |
 | **Что делает** | Проверяет сроки OAuth-токенов (Anthropic, Codex) на Sylvanas |
 | **Зачем** | Anthropic OAuth периодически даёт 401. Cron ловит умирающие токены до того, как агенты перестанут работать |
@@ -159,7 +159,7 @@ ssh -o ConnectTimeout=5 root@<ARTHAS_TS_IP> "bash /home/openclaw/.openclaw/scrip
 | Параметр | Значение |
 |----------|----------|
 | **Расписание** | `0 7 * * *` (07:00 UTC, раз в день) |
-| **Модель** | default (Kimi K2.5) |
+| **Модель** | default (`kimi`) |
 | **Delivery** | announce |
 | **Что делает** | Проверяет наличие новой версии OpenClaw в npm registry |
 | **Зачем** | Информирует о доступных обновлениях. Не обновляет сам -- обновление идёт через канарейку (Illidan → Thrall → Sylvanas) по решению принца или Тралла |
@@ -327,7 +327,7 @@ groupPolicy: allowlist на обоих каналах.
 
 | Компонент | Что | Статус |
 |-----------|-----|--------|
-| Heartbeat | 2ч, Kimi K2.5, 24/7 | ✅ |
+| Heartbeat | 2ч, `kimi`, 24/7 | ✅ |
 | ILL-C1 | constitution-sync */6h | ✅ |
 | ILL-C2 | memory-rotate 21:00 | ✅ |
 | CFG-1 | embedInterval: 30m | ✅ |
