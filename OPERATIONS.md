@@ -127,8 +127,7 @@ inbox -> progress -> [pipeline] -> review -> done
 Нарушение (отсутствие базового скилла) = VIOLATION. Иллидан проверяет при еженедельном аудите.
 
 **Обязательность:**
-- Регламент задач ОБЯЗАТЕЛЕН для ВСЕХ агентов: Сильвана, Артас, Батрак, Джайна, Кел'Тузад, Тралл, Иллидан
-- **Исключение: Кель'тас** -- у него собственный регламент для контента и текстовых pipeline'ов
+- Регламент задач ОБЯЗАТЕЛЕН для ВСЕХ агентов: Сильвана, Артас, Батрак, Джайна, Тралл, Иллидан
 - Нарушение регламента = VIOLATION категории «задачная система»
 
 **Прочие правила:**
@@ -693,7 +692,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | ID | Расписание | Скрипт | Что сломается при удалении |
 |----|-----------|--------|---------------------------|
 | **ART-C1** | `0 21 * * *` | `memory-rotate.sh` (Артас) | Файлы памяти вырастут >10KB → flush заблокирован → Артас не сохраняет контекст |
-| **ART-C2** | `0 */6 * * *` | `constitution-sync.sh` | `_shared/CONVENTIONS.md` устаревает → Артас работает по старым правилам |
+| ~~**ART-C2**~~ | ~~`0 */6 * * *`~~ | ~~`constitution-sync.sh`~~ | **DEPRECATED** — заменён Firebase sync (GitHub Action `sa-github-action`) |
 | **ART-C3** | `0 */6 * * *` | `learnings-merge.py` | `shared/LEARNINGS.md` не обновляется → уроки не попадают в общую память |
 | **ART-C4** | `0 4 * * *` | `backup-daily.sh` | Нет бэкапов → потеря данных при сбое |
 | **ART-C5** | `0 4 * * *` | `session-rotate.sh` | Сессии не чистятся → диск переполняется |
@@ -704,7 +703,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 | ID | Расписание | Скрипт | Что сломается при удалении |
 |----|-----------|--------|---------------------------|
 | **THR-C1** | `0 * * * *` | `obsidian-sync.sh` | `agent-memory/shared/` устаревает → все агенты теряют shared-контекст через QMD |
-| **THR-C2** | `0 */6 * * *` | `constitution-sync.sh` | Тралл работает по старой конституции |
+| ~~**THR-C2**~~ | ~~`0 */6 * * *`~~ | ~~`constitution-sync.sh`~~ | **DEPRECATED** — заменён Firebase sync (GitHub Action `sa-github-action`) |
 | **THR-C3** | `0 21 * * *` | `memory-rotate.sh` | Тралл не ротирует память → flush заблокирован |
 | **THR-C4** | `30 3 * * *` | `backup-daily.sh` | Нет бэкапов → потеря данных при сбое |
 | **THR-C5** | `0 4 * * *` | `cleanup-tmp.sh` | /tmp забивается → диск переполняется |
@@ -713,7 +712,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 | ID | Расписание | Скрипт | Что сломается при удалении |
 |----|-----------|--------|---------------------------|
-| **ILL-C1** | `0 */6 * * *` | `constitution-sync.sh` | Иллидан работает по старой конституции |
+| ~~**ILL-C1**~~ | ~~`0 */6 * * *`~~ | ~~`constitution-sync.sh`~~ | **DEPRECATED** — заменён Firebase sync (GitHub Action `sa-github-action`) |
 | **ILL-C2** | `0 21 * * *` | `memory-rotate.sh` | Иллидан не ротирует память → flush заблокирован |
 
 ### Защищённые конфиги (PROTECTED CONFIG)
@@ -763,7 +762,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 
 | ID | Cron | Назначение | Статус |
 |----|------|------------|--------|
-| **S-CRON-1** | `constitution-sync.sh` (каждые 6ч) | Актуализирует конституцию/конвенции | PROTECTED |
+| **S-CRON-1** | ~~`constitution-sync.sh`~~ | ~~Актуализирует конституцию/конвенции~~ | DEPRECATED — заменён Firebase sync (GitHub Action `sa-github-action`) |
 | **S-CRON-2** | `memory-rotate.sh` (daily) | Сдерживает рост memory-файлов, сохраняет flush-работоспособность | PROTECTED |
 | **S-CRON-3** | `learnings-merge.py` (каждые 6ч) | Синхронизирует общий слой уроков | PROTECTED |
 | **S-CRON-4** | `notify-chief-channel.sh` (каждые 30м) | Сигнализирует про blocked/needs_chief по задачам | REMOVED (2026-03-06) |
@@ -808,7 +807,7 @@ rd-engine    ──нашёл модель──>  model-scout (measure -> migra
 crontab -u openclaw -l > /tmp/crontab.backup.$(date +%Y%m%d_%H%M%S)
 
 # 2. После изменения — верифицируй, что защищённые кроны на месте
-crontab -u openclaw -l | grep -E "memory-rotate|constitution-sync|learnings-merge|obsidian-sync"
+crontab -u openclaw -l | grep -E "memory-rotate|learnings-merge|obsidian-sync"
 
 # 3. Если кто-то из них пропал — СТОП, восстанови из бэкапа:
 # crontab -u openclaw /tmp/crontab.backup.<timestamp>
@@ -830,7 +829,6 @@ SERVER=$(hostname)
 # Кроны
 check() { echo "$CRON" | grep -q "$2" && echo "✅ $1" || echo "❌ НАРУШЕН: $1 ($2)"; }
 check "memory-rotate"     "memory-rotate"
-check "constitution-sync" "constitution-sync"
 [ "$(echo $SERVER | grep -i thrall)" ] && check "obsidian-sync" "obsidian-sync"
 [ "$(echo $SERVER | grep -i sylvanas)" ] && check "learnings-merge" "learnings-merge"
 
@@ -1189,7 +1187,7 @@ collections:
 | Расписание | Скрипт | Что делает |
 |-----------|--------|-----------|
 | `0 21 * * *` | `memory-rotate.sh` ×3 | ротация Сильваны, Артаса |
-| `0 */6 * * *` | `constitution-sync.sh` | git pull конституции → обновляет `_shared/CONVENTIONS.md` |
+| ~~`0 */6 * * *`~~ | ~~`constitution-sync.sh`~~ | **DEPRECATED** — заменён Firebase sync (GitHub Action `sa-github-action`) |
 | `0 */6 * * *` | ~~`learnings-merge.py`~~ | **DEPRECATED**: заменён Firebase + Listener skill |
 
 #### Thrall
@@ -1204,9 +1202,9 @@ collections:
 | Расписание | Скрипт | Что делает |
 |-----------|--------|-----------|
 | `0 21 * * *` | `memory-rotate.sh` | ротация памяти Иллидана |
-| `0 */6 * * *` | `constitution-sync.sh` | git pull конституции |
+| ~~`0 */6 * * *`~~ | ~~`constitution-sync.sh`~~ | **DEPRECATED** — заменён Firebase sync (GitHub Action `sa-github-action`) |
 
-**Итого: 8 кронов памяти** на 3 сервера.
+**Итого: 5 активных кронов памяти** на 3 сервера (3× `constitution-sync.sh` DEPRECATED — заменены Firebase sync).
 
 ---
 
@@ -1283,7 +1281,7 @@ collections:
 - Игнорировать проверку размера перед записью (flush)
 - Писать в `agent-memory/shared/` напрямую (только через obsidian-sync)
 - Писать в `shared/LEARNINGS.md` напрямую (только через learnings-merge.py)
-- **Удалять защищённые кроны** (ART-C1..C6, THR-C1..C5, ILL-C1..C2) без замены — см. раздел «Инварианты памяти»
+- **Удалять защищённые кроны** (ART-C1,C3..C6, THR-C1,C3..C5, ILL-C2) без замены — см. раздел «Инварианты памяти». ART-C2, THR-C2, ILL-C1 (`constitution-sync.sh`) DEPRECATED — заменены Firebase sync.
 - **Менять `embedInterval` на `"0"`** — QMD перестаёт строить эмбеддинги
 - **Удалять коллекцию `shared-main`** из QMD index.yml любого агента
 
